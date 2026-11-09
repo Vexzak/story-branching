@@ -68,9 +68,13 @@ if (fs.existsSync(clientDist)) {
 app.use('/api', notFound);
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
-  console.log(`Branching Story API listening on http://localhost:${env.PORT}`);
-  if (!fs.existsSync(clientDist)) {
-    console.log('Client build not found - run the Vite dev server for the UI.');
-  }
-});
+if (!process.env.VERCEL) {
+  app.listen(env.PORT, () => {
+    console.log(`Branching Story API listening on http://localhost:${env.PORT}`);
+    if (!fs.existsSync(clientDist)) {
+      console.log('Client build not found - run the Vite dev server for the UI.');
+    }
+  });
+}
+
+export default app;
