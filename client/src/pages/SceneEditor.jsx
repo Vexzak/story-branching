@@ -735,14 +735,14 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
         </button>
         <div className="se-title">
           <h1>{scene.title || 'Untitled scene'}</h1>
-          <span className="ed-pill">Visual editor</span>
+          <span className="ed-pill">Biswal na editor</span>
         </div>
         <div className="se-bar-actions">
           <span className={dirty ? 'ed-save-state ed-save-dirty' : 'ed-save-state'}>
             {saving ? 'Saving…' : dirty ? 'May pagbabagong hindi pa nase-save' : '✓ All saved'}
           </span>
           <button type="button" className="ed-btn ed-btn-primary" disabled={saving || !dirty} onClick={save}>
-            Save scene
+            I-save ang eksena
           </button>
         </div>
       </div>
@@ -751,12 +751,12 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
         {/* ---------------- Library ---------------- */}
         {!preview && (
           <aside className="ed-card se-panel">
-            <h2>Characters &amp; objects</h2>
+            <h2>Mga tauhan at bagay</h2>
             <label
               className={uploading ? 'ed-btn ed-btn-primary ed-file ed-disabled' : 'ed-btn ed-btn-primary ed-file'}
               style={{ width: '100%', marginBottom: 10 }}
             >
-              {uploading ? 'Uploading…' : '+ Upload character or object'}
+              {uploading ? 'Uploading…' : '+ Mag-upload ng tauhan o bagay'}
               <input
                 type="file"
                 multiple
@@ -785,7 +785,7 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
               }}
             >
               <strong>O i-drop dito ang mga larawan</strong>
-              <span>Transparent PNGs work best (up to 5 MB each).</span>
+              <span>Pinakamainam ang PNG na may transparent na likuran (hanggang 5 MB bawat isa).</span>
               <input
                 type="file"
                 multiple
@@ -799,10 +799,10 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
               />
             </label>
 
-            <p className="ed-hint">Drag a picture onto the scene, or use “+ Add to scene”.</p>
+            <p className="ed-hint">I-drag ang larawan papunta sa eksena o pindutin ang “+ Idagdag sa eksena”.</p>
 
             {assetsLoading ? (
-              <p className="se-empty">Loading pictures…</p>
+              <p className="se-empty">Naglo-load ng mga larawan…</p>
             ) : assets.length === 0 ? (
               <p className="se-empty">Wala pang larawan. Mag-upload muna ng tauhan sa itaas.</p>
             ) : (
@@ -823,7 +823,7 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
                       <img src={a.url} alt="" draggable={false} />
                     </div>
                     <button type="button" className="ed-btn ed-btn-primary" onClick={() => addObject(a.url)}>
-                      + Add to scene
+                      + Idagdag sa eksena
                     </button>
                   </div>
                 ))}
@@ -872,7 +872,7 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
           >
             {!bg && (
               <div className="se-nobg">
-                <span>No background picture yet. Add one in the scene settings and it will show up here.</span>
+                <span>Wala pang larawan sa likuran. Magdagdag nito sa mga setting ng eksena para lumitaw dito.</span>
               </div>
             )}
 
@@ -922,14 +922,14 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
 
             {!preview && objects.length === 0 && cw > 0 && (
               <div className="se-empty-hint">
-                <strong>This scene has no characters yet.</strong>
-                <span>Upload a picture on the left, then press “+ Add to scene” or drag it here.</span>
+                <strong>Wala pang tauhan sa eksenang ito.</strong>
+                <span>Mag-upload ng larawan sa kaliwa, pagkatapos ay pindutin ang “+ Idagdag sa eksena” o i-drag ito rito.</span>
               </div>
             )}
 
             {showSafe && !preview && (
               <div className="se-safe">
-                <span>4:3 safe area</span>
+                <span>Ligtas na bahagi 4:3</span>
               </div>
             )}
 
@@ -941,7 +941,7 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
               </div>
             )}
 
-            {canvasDrop && !preview && <div className="se-dropping">Drop to add to the scene</div>}
+            {canvasDrop && !preview && <div className="se-dropping">Ihulog para idagdag sa eksena</div>}
           </div>
           {assetDrag && <img className="se-drag-ghost" src={assetDrag.src} alt="" style={{ left: assetDrag.clientX, top: assetDrag.clientY }} />}
 
@@ -955,9 +955,9 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
         {/* ---------------- Properties ---------------- */}
         {!preview && (
           <aside className="ed-card se-panel">
-            <h2>Selected picture</h2>
+            <h2>Napiling larawan</h2>
             {!selected ? (
-              <p className="se-empty">Click a picture on the scene to change its size, position and more.</p>
+              <p className="se-empty">Pindutin ang larawan sa eksena para baguhin ang laki, puwesto at iba pa.</p>
             ) : (
               <>
                 <div className="se-fields">
@@ -991,10 +991,10 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
                 <div className="se-sub">Mga aksyon</div>
                 <label className="se-num" style={{ marginTop: 10 }}>Intro animation
                   <select className="ed-input" value={selected.intro} onChange={(e) => patchObject(selectedId, { intro: e.target.value })}>
-                    <option value="none">None</option><option value="fade">Fade In</option>
-                    <option value="left">Slide In from Left</option><option value="right">Slide In from Right</option>
-                    <option value="top">Slide In from Top</option><option value="bottom">Slide In from Bottom</option>
-                    <option value="zoom">Zoom In</option><option value="bounce">Bounce In</option>
+                    <option value="none">Wala</option><option value="fade">Unti-unting lumitaw</option>
+                    <option value="left">Dumulas papasok mula sa kaliwa</option><option value="right">Dumulas papasok mula sa kanan</option>
+                    <option value="top">Dumulas papasok mula sa itaas</option><option value="bottom">Dumulas papasok mula sa ibaba</option>
+                    <option value="zoom">Lumalapit</option><option value="bounce">Patalbog na lumitaw</option>
                   </select>
                 </label>
                 {selected.intro !== 'none' && <div className="se-fields" style={{ marginTop: 8 }}>
@@ -1036,9 +1036,9 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
               </>
             )}
 
-            <div className="se-sub">All layers (top first)</div>
+            <div className="se-sub">Lahat ng patong (nasa itaas muna)</div>
             {objects.length === 0 ? (
-              <p className="se-empty">Nothing on this scene yet.</p>
+              <p className="se-empty">Wala pang laman ang eksenang ito.</p>
             ) : (
               <ul className="se-layers">
                 {layersTopFirst.map((o) => (
@@ -1051,7 +1051,7 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
                       <span className="se-layer-img se-checker">
                         <img src={o.src} alt="" />
                       </span>
-                      <span className="se-layer-name">Picture {objects.indexOf(o) + 1}</span>
+                      <span className="se-layer-name">Larawan {objects.indexOf(o) + 1}</span>
                       <small>{Math.round(o.opacity * 100)}%</small>
                     </button>
                   </li>

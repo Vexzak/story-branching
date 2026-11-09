@@ -18,7 +18,7 @@ function Highlight({ title, scene, detail, color }) {
       {scene ? <>
         <strong>{scene.title}</strong>
         <small>{detail(scene)}</small>
-      </> : <small>There is not enough play data yet.</small>}
+      </> : <small>Kulang pa ang datos ng paglalaro.</small>}
     </div>
   );
 }
@@ -45,7 +45,7 @@ export default function StoryDetailsModal({ story, onClose }) {
       <section className="story-modal" role="dialog" aria-modal="true" aria-labelledby="story-modal-title">
         <header className="story-modal-header" style={{ '--story-accent': story.color }}>
           <div>
-            <p className="story-modal-eyebrow">Story report</p>
+            <p className="story-modal-eyebrow">Ulat ng kuwento</p>
             <h2 id="story-modal-title">{story.title}</h2>
           </div>
           <button type="button" className="story-modal-close" aria-label="Close story report" onClick={onClose}>×</button>
@@ -53,50 +53,50 @@ export default function StoryDetailsModal({ story, onClose }) {
 
         <div className="story-modal-body">
           <div className="story-detail-tiles">
-            <DetailTile label="Success rate" value={`${story.successRate}%`} hint="students who finished" color={story.color} />
-            <DetailTile label="Students started" value={story.startedStudents} color={story.color} />
-            <DetailTile label="Students finished" value={story.finishedStudents} color={story.color} />
-            <DetailTile label="Average attempts per scene" value={story.averageAttemptsPerScene ?? '—'} hint={story.averageAttemptsPerScene === null ? 'No passes recorded' : 'among students who passed'} color={story.color} />
+            <DetailTile label="Antas ng tagumpay" value={`${story.successRate}%`} hint="mga mag-aaral na nakatapos" color={story.color} />
+            <DetailTile label="Mga mag-aaral na nagsimula" value={story.startedStudents} color={story.color} />
+            <DetailTile label="Mga mag-aaral na nakatapos" value={story.finishedStudents} color={story.color} />
+            <DetailTile label="Karaniwang pagsubok bawat eksena" value={story.averageAttemptsPerScene ?? '—'} hint={story.averageAttemptsPerScene === null ? 'Wala pang naitalang nakapasa' : 'sa mga mag-aaral na nakapasa'} color={story.color} />
           </div>
 
           {!story.hasData ? (
             <div className="analytics-empty-state">
               <span aria-hidden="true">📖</span>
-              <h3>No play data yet</h3>
-              <p>When students start this story, their scene progress and attempts will appear here.</p>
+              <h3>Wala pang datos ng paglalaro</h3>
+              <p>Lalabas dito ang progreso at mga pagsubok ng mag-aaral kapag sinimulan na nila ang kuwento.</p>
             </div>
           ) : <>
             <div className="story-highlights">
               <Highlight
-                title="Hardest scene"
+                title="Pinakamahirap na eksena"
                 scene={story.hardestScene}
-                detail={(scene) => `Students needed ${scene.avgAttempts} attempts on average to pass.`}
+                detail={(scene) => `Kinailangan ng mga mag-aaral ng ${scene.avgAttempts} pagsubok sa karaniwan bago makapasa.`}
                 color={story.color}
               />
               <Highlight
-                title="Most students not passed yet"
+                title="Pinakamaraming hindi pa nakapasa"
                 scene={story.dropoffScene}
-                detail={(scene) => `${scene.droppedOff} of ${scene.reachedStudents} students who reached this scene have no correct answer recorded yet.`}
+                detail={(scene) => `${scene.droppedOff} sa ${scene.reachedStudents} mag-aaral na nakarating sa eksenang ito ang wala pang naitatalang tamang sagot.`}
                 color={story.color}
               />
             </div>
 
             <section className="analytics-panel story-detail-chart-panel">
-              <div className="analytics-panel-heading"><div><h3>Students reaching each scene</h3><p>Compare how many reached a scene with how many passed it.</p></div></div>
-              {scenesWithData.length ? <SceneReachChart scenes={scenesWithData} color={story.color} /> : <p className="analytics-empty-chart">No scene choices have been recorded yet.</p>}
+              <div className="analytics-panel-heading"><div><h3>Mga mag-aaral na nakarating sa bawat eksena</h3><p>Ihambing ang bilang ng mga nakarating at nakapasa sa isang eksena.</p></div></div>
+              {scenesWithData.length ? <SceneReachChart scenes={scenesWithData} color={story.color} /> : <p className="analytics-empty-chart">Wala pang naitalang pagpili sa mga eksena.</p>}
             </section>
 
             <section className="analytics-panel story-detail-chart-panel">
-              <div className="analytics-panel-heading"><div><h3>Attempts needed to pass</h3><p>Each student is counted once per scene, using their first successful run.</p></div></div>
-              {hasSceneAttempts ? <SceneAttemptsChart scenes={story.scenes} color={story.color} /> : <p className="analytics-empty-chart">Attempt counts will appear after students pass scenes.</p>}
+              <div className="analytics-panel-heading"><div><h3>Mga pagsubok bago makapasa</h3><p>Isang beses binibilang ang bawat mag-aaral sa bawat eksena, batay sa una niyang matagumpay na paglalaro.</p></div></div>
+              {hasSceneAttempts ? <SceneAttemptsChart scenes={story.scenes} color={story.color} /> : <p className="analytics-empty-chart">Lalabas ang bilang ng mga pagsubok kapag may mga mag-aaral nang nakapasa sa mga eksena.</p>}
             </section>
 
             <section className="analytics-panel story-scene-list-panel">
-              <div className="analytics-panel-heading"><div><h3>Scene-by-scene notes</h3><p>Simple summaries of student progress.</p></div></div>
+              <div className="analytics-panel-heading"><div><h3>Mga tala sa bawat eksena</h3><p>Maiikling buod ng progreso ng mga mag-aaral.</p></div></div>
               <ol className="story-scene-list">
                 {story.scenes.map((scene, index) => (
                   <li key={scene.id}>
-                    <span className="story-scene-number" style={{ '--story-accent': story.color }}>Scene {index + 1}</span>
+                    <span className="story-scene-number" style={{ '--story-accent': story.color }}>Eksena {index + 1}</span>
                     <div><strong>{scene.title}</strong><p>{scene.insight}</p></div>
                   </li>
                 ))}
@@ -104,7 +104,7 @@ export default function StoryDetailsModal({ story, onClose }) {
             </section>
 
             <section className="analytics-panel story-scene-list-panel">
-              <div className="analytics-panel-heading"><div><h3>Wrong answers chosen most</h3><p>These are the wrong choices students selected most often.</p></div></div>
+              <div className="analytics-panel-heading"><div><h3>Pinakamadalas na napiling maling sagot</h3><p>Ito ang mga maling sagot na pinakamadalas piliin ng mga mag-aaral.</p></div></div>
               {story.mostWrongAnswers.length ? (
                 <ol className="wrong-answer-list">
                   {story.mostWrongAnswers.map((answer, index) => (
@@ -115,7 +115,7 @@ export default function StoryDetailsModal({ story, onClose }) {
                     </li>
                   ))}
                 </ol>
-              ) : <p className="analytics-empty-chart">No wrong answer choices have been recorded.</p>}
+              ) : <p className="analytics-empty-chart">Wala pang naitalang maling sagot.</p>}
             </section>
           </>}
         </div>

@@ -271,7 +271,7 @@ textarea.ed-input { resize: vertical; line-height: 1.5; }
 .ed-drop-before::before { top: -6px; }
 .ed-drop-after::after { bottom: -6px; }
 
-/* Story map */
+/* Mapa ng kuwento */
 .ed-map-scroll { max-height: 380px; overflow: auto; margin-top: 10px; border-radius: 14px; background: var(--ed-bg); }
 .ed-map-body { position: relative; min-width: 240px; }
 .ed-map-svg { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; }
@@ -523,24 +523,24 @@ const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
 // Plain-language names for the scene types. The saved values stay the same.
 const SCENE_TYPES = {
   start: {
-    label: 'Start',
-    help: 'Where the story begins. It tells the first part and leads to the next scene.',
+    label: 'Simula',
+    help: 'Dito nagsisimula ang kuwento. Ipinapakita nito ang unang bahagi at humahantong sa susunod na eksena.',
   },
   narrative: {
-    label: 'Story part',
-    help: 'Tells what happens, then the player taps to continue.',
+    label: 'Bahagi ng kuwento',
+    help: 'Ipinapakita nito ang nangyayari, pagkatapos ay pipindot ang mag-aaral para magpatuloy.',
   },
   decision: {
-    label: 'Question',
-    help: 'The player picks an answer. One answer is right. Wrong answers lead to an "Oops" scene.',
+    label: 'Tanong',
+    help: 'Pipili ng sagot ang mag-aaral. May isang tamang sagot. Dadalhin sa eksenang “Naku!” ang mga maling sagot.',
   },
   failure: {
-    label: 'Oops',
-    help: 'Shown after a wrong answer. Send the player back to try again.',
+    label: 'Naku!',
+    help: 'Lalabas ito kapag mali ang sagot. Pabalikin ang mag-aaral para sumubok muli.',
   },
   ending: {
-    label: 'The End',
-    help: 'Finishes the story. Nothing comes after it.',
+    label: 'Wakas',
+    help: 'Dito nagtatapos ang kuwento. Wala nang susunod na eksena.',
   },
 };
 const TYPE_ORDER = ['start', 'narrative', 'decision', 'failure', 'ending'];
@@ -579,7 +579,7 @@ function SceneIcon({ type, size = 18 }) {
 
 async function uploadImage(storyId, kind, sceneId, file) {
   if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
-    throw new Error('Choose a PNG, JPEG or WebP image.');
+    throw new Error('Choose a PNG, JPEG o WebP image.');
   }
   if (file.size > MAX_IMAGE_BYTES) throw new Error('That image is larger than 5 MB.');
 
@@ -746,7 +746,7 @@ export default function StoryConfiguration() {
           })),
         },
       });
-      pushToast('success', 'Story order and unlock settings saved.', 4000);
+      pushToast('success', 'Na-save ang pagkakasunod-sunod at mga setting ng pagbubukas ng kuwento.', 4000);
       await loadStories();
     } catch (err) {
       pushToast('error', err.message, 9000);
@@ -771,23 +771,23 @@ export default function StoryConfiguration() {
     <div className="ed">
       <style>{EDITOR_CSS}</style>
       <header className="ed-hero">
-        <h1>Your stories</h1>
-        <p>Pick a story to edit, or start a brand new one.</p>
+        <h1>Mga kuwento mo</h1>
+        <p>Pumili ng kuwentong babaguhin o magsimula ng bago.</p>
       </header>
 
       <Toasts toasts={toasts} onDismiss={dismissToast} />
-      {loading && <p className="ed-muted">Loading stories…</p>}
+      {loading && <p className="ed-muted">Naglo-load ng mga kuwento…</p>}
 
       {!loading && stories.length > 0 && (
         <div className="ed-story-sequence-bar">
-          <span className="ed-muted">The first story is always available. Draft stories are skipped.</span>
+          <span className="ed-muted">Laging bukas ang unang kuwento. Nilalaktawan ang mga burador.</span>
           <button
             type="button"
             className="ed-btn ed-btn-primary"
             disabled={sequenceSaving || JSON.stringify(sequenceDraft) === JSON.stringify(stories)}
             onClick={saveSequence}
           >
-            {sequenceSaving ? 'Saving?' : 'Save sequence'}
+            {sequenceSaving ? 'Sine-save?' : 'I-save ang pagkakasunod-sunod'}
           </button>
         </div>
       )}
@@ -796,7 +796,7 @@ export default function StoryConfiguration() {
         {sequenceDraft.map((s, index) => (
           <article key={s.id} className="ed-story-tile">
             <div className="ed-story-thumb">
-              {s.cover_image_path ? <img src={s.cover_image_path} alt="" /> : <span>No cover picture</span>}
+              {s.cover_image_path ? <img src={s.cover_image_path} alt="" /> : <span>Walang larawan sa pabalat</span>}
               <span className="ed-story-thumb-title">{s.title}</span>
               <div className="ed-story-thumb-controls">
                 <span className={s.status === 'published' ? 'ed-pill ed-pill-live' : 'ed-pill'}>
@@ -807,7 +807,7 @@ export default function StoryConfiguration() {
                   <button type="button" aria-label={`Move ${s.title} up`} disabled={index === 0 || sequenceSaving} onClick={() => moveStory(index, -1)}>&#8593;</button>
                   <button type="button" aria-label={`Move ${s.title} down`} disabled={index === sequenceDraft.length - 1 || sequenceSaving} onClick={() => moveStory(index, 1)}>&#8595;</button>
                 </div>
-                <label className="ed-story-lock" title={index === 0 ? 'The first story is always unlocked' : 'Lock until previous story is completed'}>
+                <label className="ed-story-lock" title={index === 0 ? 'Laging bukas ang unang kuwento' : 'I-lock hanggang matapos ang naunang kuwento'}>
                   <input
                     type="checkbox"
                     checked={index > 0 && !!s.unlock_after_previous}
@@ -816,7 +816,7 @@ export default function StoryConfiguration() {
                       ? { ...item, unlock_after_previous: event.target.checked }
                       : item))}
                   />
-                  <span>Lock</span>
+                  <span>I-lock</span>
                 </label>
               </div>
             </div>
@@ -834,9 +834,9 @@ export default function StoryConfiguration() {
             <span>+</span>
           </div>
           <div className="ed-story-info">
-            <strong>Start a new story</strong>
+            <strong>Magsimula ng bagong kuwento</strong>
             <label className="ed-label" htmlFor="new-story-title">
-              Story title
+              Pamagat ng kuwento
             </label>
             <input
               id="new-story-title"
@@ -1044,10 +1044,10 @@ function StoryEditor({ storyId, onClose }) {
       await load();
       setSceneId(scene.id);
       setTab('scenes');
-    }, 'Scene added. Give it a name and write what happens.');
+    }, 'Naidagdag ang eksena. Lagyan ito ng pangalan at isulat ang mangyayari.');
 
   const deleteScene = () => {
-    if (!window.confirm('Delete this scene and its choices? This cannot be undone.')) return;
+    if (!window.confirm('Burahin ang eksena at mga pagpipilian nito? Hindi na ito maibabalik.')) return;
     act(async () => {
       await apiFetch(`${BASE}/scenes/${sceneId}`, { method: 'DELETE' });
       const d = await load();
@@ -1090,7 +1090,7 @@ function StoryEditor({ storyId, onClose }) {
       });
       await load();
       setStoryForm((p) => ({ ...p, starting_scene_id: sceneId }));
-    }, 'This scene is now where the story starts.');
+    }, 'Dito na nagsisimula ang kuwento.');
 
   const addChoice = () =>
     act(async () => {
@@ -1100,10 +1100,10 @@ function StoryEditor({ storyId, onClose }) {
         body: { text: 'New choice' },
       });
       await load();
-    }, 'Choice added.');
+    }, 'Naidagdag ang pagpipilian.');
 
   const deleteChoice = (id) => {
-    if (!window.confirm('Delete this choice?')) return;
+    if (!window.confirm('Burahin ang pagpipiliang ito?')) return;
     act(async () => {
       await persistScene();
       await apiFetch(`${BASE}/choices/${id}`, { method: 'DELETE' });
@@ -1157,13 +1157,13 @@ function StoryEditor({ storyId, onClose }) {
       const r = await apiFetch(`${BASE}/stories/${storyId}/publish`, { method: 'POST' });
       setReport({ errors: [], warnings: r.warnings ?? [] });
       await load();
-    }, 'Published! Students now see this version.', 'Publishing…');
+    }, 'Nailathala na! Makikita na ng mga mag-aaral ang bersyong ito.', 'Publishing…');
 
   const unpublish = () =>
     act(async () => {
       await apiFetch(`${BASE}/stories/${storyId}/unpublish`, { method: 'POST' });
       await load();
-    }, 'Unpublished. Students can no longer start this story.');
+    }, 'Inalis na sa pagkakalathala. Hindi na masisimulan ng mga mag-aaral ang kuwentong ito.');
 
   const uploadCover = (file) =>
     file &&
@@ -1184,7 +1184,7 @@ function StoryEditor({ storyId, onClose }) {
       await persistScene();
       await uploadImage(storyId, 'background', sceneId, file);
       await load();
-    }, 'Background picture updated. Publish to show it to students.');
+    }, 'Na-update ang larawan sa likuran. Ilathala para makita ito ng mga mag-aaral.');
 
   const removeBackground = () =>
     act(async () => {
@@ -1193,7 +1193,7 @@ function StoryEditor({ storyId, onClose }) {
         method: 'DELETE',
       });
       await load();
-    }, 'Background picture removed. Publish to apply it.');
+    }, 'Inalis ang larawan sa likuran. Ilathala para mailapat ito.');
 
   const uploadSoundEffect = (file) =>
     file &&
@@ -1201,14 +1201,14 @@ function StoryEditor({ storyId, onClose }) {
       await persistScene();
       await uploadSceneAudio(storyId, sceneId, file);
       await load();
-    }, 'Sound effect updated. Publish to apply it.');
+    }, 'Na-update ang tunog. Ilathala para mailapat ito.');
 
   const removeSoundEffect = () =>
     act(async () => {
       await persistScene();
       await apiFetch(`${BASE}/stories/${storyId}/audio?sceneId=${sceneId}`, { method: 'DELETE' });
       await load();
-    }, 'Sound effect removed. Publish to apply it.');
+    }, 'Inalis ang tunog. Ilathala para mailapat ito.');
 
   /* ---------- derived values (hooks must run before any early return) ---------- */
   const scenes = data?.scenes;
@@ -1234,8 +1234,8 @@ function StoryEditor({ storyId, onClose }) {
         ok: needsExit.length === 0,
         text:
           needsExit.length === 0
-            ? 'Every scene leads somewhere'
-            : `These scenes have no choice yet: ${needsExit.map((s) => s.title || 'Untitled').join(', ')}`,
+            ? 'May patutunguhan ang bawat eksena'
+            : `Wala pang pagpipilian ang mga eksenang ito: ${needsExit.map((s) => s.title || 'Walang pamagat').join(', ')}`,
       },
     ];
   }, [scenes, choiceCounts, storyForm.title, storyForm.starting_scene_id]);
@@ -1249,7 +1249,7 @@ function StoryEditor({ storyId, onClose }) {
         ) : (
           <div className="ed-loading-card">
             <span className="ed-spinner" aria-hidden="true" />
-            <span>Loading your story…</span>
+            <span>Naglo-load ang kuwento…</span>
           </div>
         )}
         <button type="button" className="ed-btn" onClick={onClose}>
@@ -1288,13 +1288,13 @@ function StoryEditor({ storyId, onClose }) {
 
   const sceneOptions = scenes.map((s) => (
     <option key={s.id} value={s.id}>
-      {`${s.title || 'Untitled'} (${SCENE_TYPES[s.scene_type]?.label ?? s.scene_type})`}
+      {`${s.title || 'Walang pamagat'} (${SCENE_TYPES[s.scene_type]?.label ?? s.scene_type})`}
     </option>
   ));
 
   const sceneName = (id) => {
     const s = scenes.find((x) => x.id === id);
-    return s ? s.title || 'Untitled' : null;
+    return s ? s.title || 'Walang pamagat' : null;
   };
 
   return (
@@ -1305,7 +1305,7 @@ function StoryEditor({ storyId, onClose }) {
         <div className="ed-loader" role="status">
           <div className="ed-loader-card">
             <span className="ed-spinner" aria-hidden="true" />
-            <span>One moment…</span>
+            <span>Sandali…</span>
           </div>
         </div>
       )}
@@ -1329,15 +1329,15 @@ function StoryEditor({ storyId, onClose }) {
       </div>
 
       <p className="ed-muted ed-draft-note">
-        Your changes stay private as a draft. Students only see them after you press <strong>Publish</strong> in step 3.
+        Mananatiling pribado bilang burador ang mga pagbabago. Makikita lamang ito ng mga mag-aaral kapag pinindot ang <strong>Ilathala</strong> sa hakbang 3.
       </p>
 
       {/* Steps */}
       <div className="ed-tabs" role="tablist">
         {[
-          ['info', '1', 'Story info'],
-          ['scenes', '2', 'Build scenes'],
-          ['publish', '3', 'Check & publish'],
+          ['info', '1', 'Impormasyon ng kuwento'],
+          ['scenes', '2', 'Buuin ang mga eksena'],
+          ['publish', '3', 'Suriin at ilathala'],
         ].map(([key, n, label]) => (
           <button
             key={key}
@@ -1356,10 +1356,10 @@ function StoryEditor({ storyId, onClose }) {
       {/* ---------------- Step 1: Story info ---------------- */}
       {tab === 'info' && (
         <div className="ed-card ed-narrow">
-          <h2>Tell us about your story</h2>
+          <h2>Ipakilala ang iyong kuwento</h2>
           <div className="ed-field">
             <label className="ed-label" htmlFor="story-title">
-              Story title
+              Pamagat ng kuwento
             </label>
             <input
               id="story-title"
@@ -1371,7 +1371,7 @@ function StoryEditor({ storyId, onClose }) {
           </div>
           <div className="ed-field">
             <label className="ed-label" htmlFor="story-author">
-              Author
+              May-akda
             </label>
             <input
               id="story-author"
@@ -1384,35 +1384,35 @@ function StoryEditor({ storyId, onClose }) {
           </div>
           <div className="ed-field">
             <label className="ed-label" htmlFor="story-full-text">
-              Full story text
+              Buong teksto ng kuwento
             </label>
             <textarea
               id="story-full-text"
               className="ed-input"
               rows={12}
               maxLength={50000}
-              placeholder="Write the complete story that students can read from the book icon."
+              placeholder="Isulat ang buong kuwentong mababasa ng mga mag-aaral sa icon ng aklat."
               value={storyForm.full_story_text}
               onChange={(e) => updateStory({ full_story_text: e.target.value })}
             />
-            <p className="ed-hint">This text is automatically divided into book pages for students.</p>
+            <p className="ed-hint">Awtomatikong hahatiin ang tekstong ito sa mga pahina ng aklat para sa mga mag-aaral.</p>
           </div>
           <div className="ed-field">
             <label className="ed-label" htmlFor="story-desc">
-              Short description
+              Maikling paglalarawan
             </label>
             <textarea
               id="story-desc"
               className="ed-input"
               rows={3}
-              placeholder="What is this story about? Students see this on the story card."
+              placeholder="Tungkol saan ang kuwento? Makikita ito ng mga mag-aaral sa kard ng kuwento."
               value={storyForm.description}
               onChange={(e) => updateStory({ description: e.target.value })}
             />
           </div>
           <div className="ed-field">
             <label className="ed-label" htmlFor="story-start">
-              Which scene starts the story?
+              Aling eksena ang simula ng kuwento?
             </label>
             <select
               id="story-start"
@@ -1420,19 +1420,19 @@ function StoryEditor({ storyId, onClose }) {
               value={storyForm.starting_scene_id}
               onChange={(e) => updateStory({ starting_scene_id: e.target.value })}
             >
-              <option value="">— choose a scene —</option>
+              <option value="">— pumili ng eksena —</option>
               {sceneOptions}
             </select>
-            {scenes.length === 0 && <p className="ed-hint">Add a scene in step 2 first.</p>}
+            {scenes.length === 0 && <p className="ed-hint">Magdagdag muna ng eksena sa hakbang 2.</p>}
           </div>
 
           <div className="ed-field">
             <span className="ed-label">Larawan sa pabalat</span>
             <div className="ed-media">
               {story.cover_image_path ? (
-                <img className="ed-media-preview" src={story.cover_image_path} alt="Cover preview" />
+                <img className="ed-media-preview" src={story.cover_image_path} alt="Silip sa pabalat" />
               ) : (
-                <div className="ed-media-empty">No cover picture yet</div>
+                <div className="ed-media-empty">Wala pang larawan sa pabalat</div>
               )}
               <div className="ed-row">
                 <label className={busy ? 'ed-btn ed-file ed-disabled' : 'ed-btn ed-file'}>
@@ -1450,17 +1450,17 @@ function StoryEditor({ storyId, onClose }) {
                 </label>
                 {story.cover_image_path && (
                   <button type="button" className="ed-btn ed-btn-ghost" disabled={busy} onClick={removeCover}>
-                    Remove
+                    Alisin
                   </button>
                 )}
               </div>
-              <p className="ed-hint">PNG, JPEG or WebP, up to 5 MB. The cover shows to students right away.</p>
+              <p className="ed-hint">PNG, JPEG o WebP, hanggang 5 MB. Makikita agad ng mga mag-aaral ang pabalat.</p>
             </div>
           </div>
 
           <div className="ed-row">
             <button type="button" className="ed-btn ed-btn-primary" disabled={busy} onClick={() => setTab('scenes')}>
-              Next: build scenes
+              Susunod: buuin ang mga eksena
             </button>
           </div>
         </div>
@@ -1481,7 +1481,7 @@ function StoryEditor({ storyId, onClose }) {
           />
           <aside className="ed-card ed-sidebar">
             <h2>Mga eksena mo</h2>
-            <p className="ed-hint">A scene is one screen of the story. Tap one to edit it, and drag ⋮⋮ to change the order.</p>
+            <p className="ed-hint">Ang eksena ay isang bahagi ng kuwento. Pindutin ito para baguhin at i-drag ang ⋮⋮ para ayusin ang pagkakasunod-sunod.</p>
 
             {scenes.length === 0 && (
               <div className="ed-empty">
@@ -1547,7 +1547,7 @@ function StoryEditor({ storyId, onClose }) {
                         <SceneIcon type={s.scene_type} size={18} />
                       </span>
                       <span className="ed-scene-text">
-                        <strong>{s.title || 'Untitled'}</strong>
+                        <strong>{s.title || 'Walang pamagat'}</strong>
                         <small>
                           {info.label}
                           {isStart ? ' · starts here' : ''}
@@ -1638,7 +1638,7 @@ function StoryEditor({ storyId, onClose }) {
                     Edit Scene
                   </button>
                   {currentScene && currentScene.id === storyForm.starting_scene_id ? (
-                    <span className="ed-pill ed-pill-live">Story starts here</span>
+                    <span className="ed-pill ed-pill-live">Dito nagsisimula ang kuwento</span>
                   ) : (
                     <button type="button" className="ed-btn ed-btn-small" disabled={busy} onClick={makeStart}>
                       Make this the start
@@ -1647,7 +1647,7 @@ function StoryEditor({ storyId, onClose }) {
                 </div>
 
                 <div className="ed-block">
-                  <h3>What happens</h3>
+                  <h3>Ano ang nangyayari</h3>
                   <div className="ed-field">
                     <label className="ed-label" htmlFor="scene-title">
                       Scene name
@@ -1697,7 +1697,7 @@ function StoryEditor({ storyId, onClose }) {
                   </div>
                   <div className="ed-field">
                     <label className="ed-label" htmlFor="scene-dialogue">
-                      What a character says <span className="ed-opt">(optional)</span>
+                      Sinasabi ng tauhan <span className="ed-opt">(opsyonal)</span>
                     </label>
                     <input
                       id="scene-dialogue"
@@ -1710,7 +1710,7 @@ function StoryEditor({ storyId, onClose }) {
                 </div>
 
                 <div className="ed-block">
-                  <h3>Background picture</h3>
+                  <h3>Larawan sa likuran</h3>
                   <div className="ed-media">
                     {currentScene?.background_image_path ? (
                       <img
@@ -1719,7 +1719,7 @@ function StoryEditor({ storyId, onClose }) {
                         alt="Background preview"
                       />
                     ) : (
-                      <div className="ed-media-empty">No background picture</div>
+                      <div className="ed-media-empty">Walang larawan sa likuran</div>
                     )}
                     <div className="ed-row">
                       <label className={busy ? 'ed-btn ed-file ed-disabled' : 'ed-btn ed-file'}>
@@ -1737,7 +1737,7 @@ function StoryEditor({ storyId, onClose }) {
                       </label>
                       {currentScene?.background_image_path && (
                         <button type="button" className="ed-btn ed-btn-ghost" disabled={busy} onClick={removeBackground}>
-                          Remove
+                          Alisin
                         </button>
                       )}
                     </div>
@@ -1761,25 +1761,25 @@ function StoryEditor({ storyId, onClose }) {
                       disabled={!currentScene}
                       onClick={() => setShowScenePreview(true)}
                     >
-                      Preview scene
+                      Silipin ang eksena
                     </button>
-                    <p className="ed-hint">PNG, JPEG or WebP, up to 5 MB. Publish for students to see it.</p>
+                    <p className="ed-hint">PNG, JPEG o WebP, hanggang 5 MB. Ilathala para makita ng mga mag-aaral.</p>
                   </div>
                 </div>
 
                 <div className="ed-block">
-                  <h3>Sound Effects</h3>
+                  <h3>Mga tunog</h3>
                   <div className="ed-media">
                     {currentScene?.sound_effect_path ? (
                       <audio controls preload="none" src={currentScene.sound_effect_path} style={{ width: '100%' }}>
                         Your browser does not support audio playback.
                       </audio>
                     ) : (
-                      <div className="ed-media-empty">No sound effect for this scene</div>
+                      <div className="ed-media-empty">Walang tunog ang eksenang ito</div>
                     )}
                     <div className="ed-row">
                       <label className={busy ? 'ed-btn ed-file ed-disabled' : 'ed-btn ed-file'}>
-                        {currentScene?.sound_effect_path ? 'Replace audio' : 'Upload MP3'}
+                        {currentScene?.sound_effect_path ? 'Palitan ang tunog' : 'Mag-upload ng MP3'}
                         <input
                           type="file"
                           accept=".mp3,audio/mpeg,audio/mp3"
@@ -1793,19 +1793,19 @@ function StoryEditor({ storyId, onClose }) {
                       </label>
                       {currentScene?.sound_effect_path && (
                         <button type="button" className="ed-btn ed-btn-ghost" disabled={busy} onClick={removeSoundEffect}>
-                          Remove
+                          Alisin
                         </button>
                       )}
                     </div>
-                    <p className="ed-hint">MP3, up to 20 MB. Sound plays when this scene appears. Publish for students to hear it.</p>
+                    <p className="ed-hint">MP3, hanggang 20 MB. Tutunog ito kapag lumabas ang eksena. Ilathala para marinig ng mga mag-aaral.</p>
                   </div>
                 </div>
 
                 <div className="ed-block">
-                  <h3>{type === 'decision' ? 'Answers the player can pick' : 'What happens next'}</h3>
+                  <h3>{type === 'decision' ? 'Answers the player can pick' : 'Ano ang nangyayari next'}</h3>
 
                   {type === 'ending' && (
-                    <p className="ed-note">This is an ending, so the story stops here. No choices needed.</p>
+                    <p className="ed-note">Wakas ito kaya dito nagtatapos ang kuwento. Hindi na kailangan ng mga pagpipilian.</p>
                   )}
 
                   {type !== 'ending' && choiceForms.length === 0 && (
@@ -1883,7 +1883,7 @@ function StoryEditor({ storyId, onClose }) {
                                 )
                               }
                             >
-                              <option value="">— choose a scene —</option>
+                              <option value="">— pumili ng eksena —</option>
                               {sceneOptions}
                             </select>
                             {targetName && <p className="ed-flow">→ {targetName}</p>}
@@ -1892,7 +1892,7 @@ function StoryEditor({ storyId, onClose }) {
                           {isDecision && (
                             <div className="ed-field">
                               <label className="ed-label">
-                                Hint or message for the player <span className="ed-opt">(optional)</span>
+                                Pahiwatig o mensahe para sa mag-aaral <span className="ed-opt">(opsyonal)</span>
                               </label>
                               <input
                                 className="ed-input"
@@ -1945,10 +1945,10 @@ function StoryEditor({ storyId, onClose }) {
 
                 <div className="ed-savebar">
                   <button type="button" className="ed-btn ed-btn-primary" disabled={busy} onClick={saveAll}>
-                    Save scene
+                    I-save ang eksena
                   </button>
                   <button type="button" className="ed-btn ed-btn-ghost ed-btn-danger-text" disabled={busy} onClick={deleteScene}>
-                    Delete scene
+                    Burahin ang eksena
                   </button>
                 </div>
               </>
@@ -1960,8 +1960,8 @@ function StoryEditor({ storyId, onClose }) {
       {/* ---------------- Step 3: Check & publish ---------------- */}
       {tab === 'publish' && (
         <div className="ed-card ed-narrow">
-          <h2>Ready to go live?</h2>
-          <p className="ed-muted">Run a quick check first. It finds anything that would stop the story from working.</p>
+          <h2>Handa na bang ilathala?</h2>
+          <p className="ed-muted">Suriin muna kung may kailangang ayusin para gumana nang maayos ang kuwento.</p>
 
           <ul className="ed-checklist">
             {checklist.map((item) => (
@@ -1989,7 +1989,7 @@ function StoryEditor({ storyId, onClose }) {
             <div className="ed-report">
               {report.errors?.length > 0 && (
                 <div className="ed-alert ed-alert-error">
-                  <strong>Fix these before publishing:</strong>
+                  <strong>Ayusin muna ang mga ito bago ilathala:</strong>
                   <ul>
                     {report.errors.map((e, i) => (
                       <li key={i}>{e}</li>
@@ -1999,7 +1999,7 @@ function StoryEditor({ storyId, onClose }) {
               )}
               {report.warnings?.length > 0 && (
                 <div className="ed-alert ed-alert-warn">
-                  <strong>Worth a look:</strong>
+                  <strong>Mainam na suriin:</strong>
                   <ul>
                     {report.warnings.map((w, i) => (
                       <li key={i}>{w}</li>
@@ -2008,7 +2008,7 @@ function StoryEditor({ storyId, onClose }) {
                 </div>
               )}
               {!report.errors?.length && !report.warnings?.length && (
-                <div className="ed-alert ed-alert-ok">No problems found. Your story is ready.</div>
+                <div className="ed-alert ed-alert-ok">Walang nakitang problema. Handa na ang kuwento.</div>
               )}
             </div>
           )}
@@ -2030,7 +2030,7 @@ function StoryEditor({ storyId, onClose }) {
             aria-labelledby="scene-preview-heading"
           >
             <div className="ed-scene-preview-head">
-              <h2 id="scene-preview-heading">Scene preview</h2>
+              <h2 id="scene-preview-heading">Silipin ang eksena</h2>
               <button type="button" className="ed-btn ed-btn-small" onClick={() => setShowScenePreview(false)}>
                 Close preview
               </button>
@@ -2061,27 +2061,27 @@ function StoryEditor({ storyId, onClose }) {
                   ))}
                 </div>
               ) : !currentScene.background_image_path ? (
-                <div className="ed-scene-preview-empty">Add a background picture or character images to preview the scene art.</div>
+                <div className="ed-scene-preview-empty">Magdagdag ng larawan sa likuran o mga tauhan para makita ang itsura ng eksena.</div>
               ) : null}
               <div className="ed-preview-animations">
-                <strong>Character intro animations</strong>
-                <ul aria-label="Character intro animations">
+                <strong>Galaw sa pagpapakilala ng mga tauhan</strong>
+                <ul aria-label="Galaw sa pagpapakilala ng mga tauhan">
                   {previewObjects.length > 0 ? previewObjects.map((object, index) => {
                     const animation = typeof object.intro === 'string' && object.intro !== 'none'
                       ? object.intro[0].toUpperCase() + object.intro.slice(1)
-                      : 'None';
-                    return <li key={object.id || index}>Character {index + 1}: {animation}</li>;
-                  }) : <li>None</li>}
+                      : 'Wala';
+                    return <li key={object.id || index}>Tauhan {index + 1}: {animation}</li>;
+                  }) : <li>Wala</li>}
                 </ul>
               </div>
               <div className="ed-scene-preview-panel">
-                <div className="ed-scene-preview-title">{sceneForm?.title || 'Untitled scene'}</div>
-                <p className="ed-scene-preview-narration">{sceneForm?.narration || 'Scene narration will appear here.'}</p>
+                <div className="ed-scene-preview-title">{sceneForm?.title || 'Eksena na walang pamagat'}</div>
+                <p className="ed-scene-preview-narration">{sceneForm?.narration || 'Dito lalabas ang pagsasalaysay sa eksena.'}</p>
                 {sceneForm?.dialogue && <p className="ed-scene-preview-dialogue">“{sceneForm.dialogue}”</p>}
                 {sceneForm?.scene_type !== 'ending' && choiceForms.length > 0 && (
-                  <div className="ed-scene-preview-choices" aria-label="Scene choices">
+                  <div className="ed-scene-preview-choices" aria-label="Mga pagpipilian sa eksena">
                     {choiceForms.map((choice) => (
-                      <div className="ed-scene-preview-choice" key={choice.id}>{choice.text || 'Choice'}</div>
+                      <div className="ed-scene-preview-choice" key={choice.id}>{choice.text || 'Pagpipilian'}</div>
                     ))}
                   </div>
                 )}
@@ -2095,7 +2095,7 @@ function StoryEditor({ storyId, onClose }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Story map (branching tree, like a git graph)                        */
+/* Mapa ng kuwento (branching tree, like a git graph)                        */
 /* ------------------------------------------------------------------ */
 const NODE_COLORS = {
   start: '#17a673',
@@ -2142,18 +2142,18 @@ function buildMap(scenes, choices, startId) {
     if (sc.scene_type === 'ending') return;
     const mine = choices.filter((c) => c.scene_id === sc.id);
     if (mine.length === 0) {
-      problems[sc.id] = 'No choice yet';
+      problems[sc.id] = 'Wala pang pagpipilian';
     } else if (sc.scene_type === 'decision') {
       const right = mine.find((c) => c.is_correct);
-      if (!right) problems[sc.id] = 'No right answer chosen';
+      if (!right) problems[sc.id] = 'Wala pang napipiling tamang sagot';
       else if (!right.destination_scene_id) problems[sc.id] = 'Right answer goes nowhere';
-      else if (mine.some((c) => !c.is_correct && !c.failure_scene_id)) problems[sc.id] = 'A wrong answer has no Oops scene';
+      else if (mine.some((c) => !c.is_correct && !c.failure_scene_id)) problems[sc.id] = 'Walang eksenang ?Naku!? para sa maling sagot';
     } else if (mine.every((c) => !c.destination_scene_id)) {
       problems[sc.id] = 'Button goes nowhere';
     }
   });
 
-  if (!startId || !byId.has(startId)) return { rows: [], edges: [], lanes: 1, loose: scenes, problems, incoming, byId };
+  if (!startId || !byId.has(startId)) return { rows: [], edges: [], lanes: 1, loose: eksena, problems, incoming, byId };
 
   const rows = [];
   const lane = {};
@@ -2194,7 +2194,7 @@ function buildMap(scenes, choices, startId) {
   return { rows, edges, lane, rowOf, lanes: maxLane + 1, loose: scenes.filter((s) => !(s.id in lane)), problems, incoming, byId };
 }
 
-function StoryMap({ scenes, choices, startId, activeId, busy, onPick }) {
+function StoryMap({ eksena, choices, startId, activeId, busy, onPick }) {
   const map = useMemo(() => buildMap(scenes, choices, startId), [scenes, choices, startId]);
   const x = (l) => MAP_PAD + l * MAP_LANE;
   const y = (i) => i * MAP_ROW + MAP_ROW / 2;
@@ -2203,11 +2203,11 @@ function StoryMap({ scenes, choices, startId, activeId, busy, onPick }) {
 
   return (
     <div className="ed-card ed-map">
-      <h2>Story map</h2>
-      <p className="ed-hint">See how your story branches. Tap a dot to edit that scene.</p>
+      <h2>Mapa ng kuwento</h2>
+      <p className="ed-hint">Tingnan kung paano nahahati ang kuwento. Pindutin ang tuldok para baguhin ang eksena.</p>
       {map.byId.get(startId) && (
         <p className="ed-hint">
-          <strong>Starts at:</strong> {map.byId.get(startId).title || 'Untitled'} · {scenes.length} scenes,{' '}
+          <strong>Nagsisimula sa:</strong> {map.byId.get(startId).title || 'Walang pamagat'} · {scenes.length} eksena,{' '}
           {choices.length} choices saved
         </p>
       )}
@@ -2217,7 +2217,7 @@ function StoryMap({ scenes, choices, startId, activeId, busy, onPick }) {
           <p>
             {scenes.length === 0
               ? 'Add scenes and the map will appear here.'
-              : 'Pick a starting scene (use "Make this the start") to see the map.'}
+              : 'Pumili ng panimulang eksena (gamitin ang ?Gawing simula ito?) para makita ang mapa.'}
           </p>
         </div>
       ) : (
@@ -2285,9 +2285,9 @@ function StoryMap({ scenes, choices, startId, activeId, busy, onPick }) {
                 style={{ top: i * MAP_ROW, height: MAP_ROW, paddingLeft: svgW + 10 }}
                 onClick={() => onPick(s.id)}
               >
-                <strong>{s.title || 'Untitled'}</strong>
+                <strong>{s.title || 'Walang pamagat'}</strong>
                 {map.problems[s.id] ? (
-                  <small className="ed-map-problem">Needs attention: {map.problems[s.id]}</small>
+                  <small className="ed-map-problem">Kailangang ayusin: {map.problems[s.id]}</small>
                 ) : (
                   <small>{SCENE_TYPES[s.scene_type]?.label}</small>
                 )}
@@ -2307,7 +2307,7 @@ function StoryMap({ scenes, choices, startId, activeId, busy, onPick }) {
 
       {map.loose.length > 0 && map.rows.length > 0 && (
         <div className="ed-loose">
-          <strong>Not connected yet</strong>
+          <strong>Hindi pa konektado</strong>
           <p className="ed-hint">
             Nothing leads to these scenes yet. Look for a red "Needs attention" note in the map above: the first one in
             the chain is where the link is missing.
@@ -2315,14 +2315,14 @@ function StoryMap({ scenes, choices, startId, activeId, busy, onPick }) {
           {map.loose.map((s) => {
             const from = (map.incoming[s.id] || []).map((id) => {
               const sc = map.byId.get(id);
-              const name = sc?.title || 'Untitled';
+              const name = sc?.title || 'Walang pamagat';
               return id in (map.lane || {}) ? name : `${name} (also not connected)`;
             });
             return (
               <div key={s.id} className="ed-loose-item">
                 <button type="button" className="ed-loose-btn" disabled={busy} onClick={() => onPick(s.id)}>
                   <SceneIcon type={s.scene_type} size={14} />
-                  {s.title || 'Untitled'}
+                  {s.title || 'Walang pamagat'}
                   {map.problems[s.id] ? ' (needs attention)' : ''}
                 </button>
                 <small className="ed-loose-from">

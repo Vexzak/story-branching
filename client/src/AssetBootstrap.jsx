@@ -27,7 +27,7 @@ function isQuotaError(error) {
 async function downloadStoryAssets(onProgress) {
   if (!('caches' in window)) throw new Error('This browser does not support offline storage. Open the app in a recent browser.');
   const response = await fetch('/api/stories/assets', { cache: 'no-store' });
-  if (!response.ok) throw new Error('Could not get the story resource list. Check your connection and retry.');
+  if (!response.ok) throw new Error('Hindi makuha ang talaan ng mga kailangan ng kuwento. Suriin ang koneksyon at subukan muli.');
   const { assets = [] } = await response.json();
   const uniqueAssets = [...new Set(assets)].filter((url) => {
     try {
@@ -46,7 +46,7 @@ async function downloadStoryAssets(onProgress) {
   if (needsDownload && navigator.storage?.estimate) {
     const { quota, usage } = await navigator.storage.estimate();
     if (quota && usage != null && quota - usage < 256 * 1024) {
-      throw new Error('This device is low on storage space. Free up some space, then retry downloading the stories.');
+      throw new Error('Kulang ang espasyo sa device na ito. Magbakante ng espasyo at subukang i-download muli ang mga kuwento.');
     }
   }
 
@@ -101,7 +101,7 @@ async function downloadStoryAssets(onProgress) {
     await Promise.all(Array.from({ length: Math.min(3, uniqueAssets.length) }, worker));
   } catch (error) {
     if (isQuotaError(error)) {
-      throw new Error('There is not enough space on this device to save all story resources. Free up storage and retry.');
+      throw new Error('Kulang ang espasyo sa device na ito para mai-save ang lahat ng kailangan ng kuwento. Magbakante ng espasyo at subukan muli.');
     }
     throw error;
   }
@@ -115,7 +115,7 @@ async function downloadStoryAssets(onProgress) {
   }
   const total = uniqueAssets.length - missing.length;
   await saveDownloadState({ version: 1, completedAt: new Date().toISOString(), count: total, missing: missing.length });
-  onProgress({ complete, total, status: 'Your stories are ready!' });
+  onProgress({ complete, total, status: 'Handa na ang mga kuwento mo!' });
 }
 
 function LoadingScreen({ progress, error, onRetry }) {
@@ -130,10 +130,10 @@ function LoadingScreen({ progress, error, onRetry }) {
         {!error ? (
           <>
             <p className="asset-status">{progress.status}</p>
-            <div className="asset-progress-track" role="progressbar" aria-label="Story downloads" aria-valuemin="0" aria-valuemax="100" aria-valuenow={percent}>
+            <div className="asset-progress-track" role="progressbar" aria-label="Mga dina-download na kuwento" aria-valuemin="0" aria-valuemax="100" aria-valuenow={percent}>
               <span className="asset-progress-fill" style={{ width: `${percent}%` }} />
             </div>
-            <div className="asset-progress-caption"><strong>{progress.total ? percent : progress.status === 'Your stories are ready!' ? 100 : 0}%</strong><span>{progress.complete} / {progress.total} assets saved</span></div>
+            <div className="asset-progress-caption"><strong>{progress.total ? percent : progress.status === 'Handa na ang mga kuwento mo!' ? 100 : 0}%</strong><span>{progress.complete} / {progress.total} na-save na file</span></div>
             <p className="asset-footnote">Panatilihing bukas ang pahina habang sine-save ang mga kuwento sa device na ito.</p>
           </>
         ) : (
@@ -163,7 +163,7 @@ export default function AssetBootstrap() {
       await downloadStoryAssets(setProgress);
       if (firstRun) setReady(true);
     } catch (err) {
-      if (firstRun) setError(err.message || 'Could not prepare story resources.');
+      if (firstRun) setError(err.message || 'Hindi maihanda ang mga kailangan ng kuwento.');
       else console.warn('Story resource refresh failed; using saved resources where available:', err.message);
     } finally {
       syncInFlight.current = false;
@@ -186,7 +186,7 @@ export default function AssetBootstrap() {
           await sync({ firstRun: true });
         }
       } catch (err) {
-        if (active) setError(err.message || 'Offline storage is unavailable.');
+        if (active) setError(err.message || 'Hindi magamit ang offline storage.');
       }
     })();
     return () => { active = false; };

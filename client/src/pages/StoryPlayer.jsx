@@ -34,8 +34,8 @@ function RotatePrompt() {
     <div className="vn-rotate-overlay" role="status" aria-live="polite">
       <div className="vn-rotate-card">
         <span className="vn-rotate-icon" aria-hidden="true">↻</span>
-        <h2>Turn your adventure sideways</h2>
-        <p>Rotate your phone to landscape to make room for the story.</p>
+        <h2>Itagilid ang telepono para sa kuwento</h2>
+        <p>Itagilid ang telepono nang pahiga para mas lumawak ang tanawin ng kuwento.</p>
       </div>
     </div>
   );
@@ -217,9 +217,9 @@ export default function StoryPlayer() {
         try {
           const savedPack = await apiFetch('/stories/offline-pack');
           const savedGame = localGame(savedPack, storyId);
-          if (!savedGame) throw new Error('This story has not been saved for offline play on this device.');
+          if (!savedGame) throw new Error('Hindi na-save ang kuwentong ito para laruin offline sa device na ito.');
           setGame(orderChoices(savedGame));
-          setNote('Offline copy · progress will not sync until you are online.');
+          setNote('Offline copy · hindi masi-sync ang progreso until you are online.');
         } catch (offlineError) {
           setError(offlineError.message || err.message);
         }
@@ -246,7 +246,7 @@ export default function StoryPlayer() {
         if (!data.tutorialSeen) {
           setTutorialVisible(true);
           apiFetch('/me/book-tutorial', { method: 'PATCH' }).catch((err) => {
-            console.warn('Could not save the book tutorial status:', err.message);
+            console.warn('Hindi ma-save ang estado ng gabay sa aklat:', err.message);
           });
         } else {
           setTutorialVisible(false);
@@ -319,7 +319,7 @@ export default function StoryPlayer() {
     try {
       if (game.offline) {
         const choice = game.scene.choices?.find((item) => item.id === choiceId);
-        if (!choice) throw new Error('That answer is not available in this saved story.');
+        if (!choice) throw new Error('Hindi makita ang sagot na iyon sa naka-save na kuwento.');
         setShowChoices(false);
         const isCorrect = game.scene.scene_type !== 'decision' || !!choice.is_correct;
         if (!isCorrect) {
@@ -327,7 +327,7 @@ export default function StoryPlayer() {
           setNote('');
         } else {
           const nextScene = localScene(game.content, choice.destination_scene_id);
-          if (!nextScene) throw new Error('This saved story is missing its next scene.');
+          if (!nextScene) throw new Error('Wala ang susunod na eksena sa naka-save na kuwento.');
           setFailure(null);
           setNote(choice.feedback || '');
           setGame({
@@ -450,7 +450,7 @@ export default function StoryPlayer() {
 
   const audioPrompt = audioBlocked && activeAudioUrl ? (
     <button type="button" className="vn-choice" onClick={enableSceneAudio} style={{ marginBottom: 12 }}>
-      Tap to play scene sound
+      Pindutin para patugtugin ang tunog ng eksena
     </button>
   ) : null;
 
@@ -481,7 +481,7 @@ export default function StoryPlayer() {
           {failure.feedback && <p className="vn-sub">{failure.feedback}</p>}
           <div className="vn-choices">
             <button type="button" className="vn-choice" onClick={() => setFailure(null)}>
-              Try again
+              Subukan muli
             </button>
           </div>
         </div>
@@ -499,8 +499,8 @@ export default function StoryPlayer() {
       <style>{ART_CSS}</style>
       <RotatePrompt />
       {hasArt && <SceneArt key={`scene-${scene?.id}`} bg={bg} objects={objects} />}
-      {game.offline && <div className="vn-offline-badge" role="status">Saved offline · progress will not sync</div>}
-      {completed && <div className="vn-complete-toast" role="status">⭐ Story complete!</div>}
+      {game.offline && <div className="vn-offline-badge" role="status">Naka-save offline · hindi masi-sync ang progreso</div>}
+      {completed && <div className="vn-complete-toast" role="status">⭐ Tapos na ang kuwento!</div>}
 
       <Link className="vn-back" to="/home" onClick={(e) => e.stopPropagation()}>
         ← Stories
@@ -518,10 +518,10 @@ export default function StoryPlayer() {
             <p className="vn-text">{scene?.narration}</p>
             {scene?.dialogue && <p className="vn-text vn-dialogue">“{scene.dialogue}”</p>}
             <button type="button" className="vn-choice" onClick={() => start(true)}>
-              Play again
+              Laruin muli
             </button>
             <Link className="vn-choice" to="/home">
-              Back to stories
+              Bumalik sa mga kuwento
             </Link>
           </div>
         ) : showChoices ? (
@@ -532,7 +532,7 @@ export default function StoryPlayer() {
               className="vn-choice vn-flow-back"
               onClick={() => setShowChoices(false)}
             >
-              Back
+              Bumalik
             </button>
             <div className="vn-choices">
               {choices.map((c) => (
@@ -569,7 +569,7 @@ export default function StoryPlayer() {
                     else setShowChoices(true);
                   }}
                 >
-                  Continue
+                  Magpatuloy
                 </button>
               </div>
             )}

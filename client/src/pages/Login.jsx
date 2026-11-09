@@ -90,7 +90,7 @@ export default function Login() {
   return (
     <div className="center-screen kids-theme">
       <div className="auth-card">
-        <h1 className="auth-title">📖 Story Adventures</h1>
+        <h1 className="auth-title">📖 Pakikipagsapalaran sa Kuwento</h1>
         <p className="auth-subtitle">Mag-sign in para maipagpatuloy ang mga kuwento mo.</p>
 
         {recoveryNotice && <div className={`alert ${recoveryNotice.tone}`} role="status" aria-live="polite">{recoveryNotice.text} <Link to="/recovery-status">Tingnan ang kahilingan</Link></div>}
@@ -98,7 +98,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="form">
           <label className="field">
-            <span>Email address</span>
+            <span>Tirahang email</span>
             <input
               type="email"
               autoComplete="email"

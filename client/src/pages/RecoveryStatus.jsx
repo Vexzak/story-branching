@@ -42,7 +42,7 @@ export default function RecoveryStatus() {
           }
         }
       } catch (err) {
-        if (active) setError(err.message || 'Could not check your request status.');
+        if (active) setError(err.message || 'Hindi masuri ang estado ng kahilingan mo.');
       }
       if (active && !finished) timer = window.setTimeout(refresh, 10000);
     };
@@ -55,7 +55,7 @@ export default function RecoveryStatus() {
       <div className="auth-card">
         <h1 className="auth-title">Estado ng kahilingan sa pagpapalit ng password</h1>
         {request ? <p className="auth-subtitle" role="status">{messages[request.status] || `Request status: ${request.status}`}</p> : <p className="auth-subtitle">{error || 'Checking your request…'}</p>}
-        {request?.status === 'approved' && <p className="muted">The reset email can take a few minutes to arrive. Check your inbox and spam folder.</p>}
+        {request?.status === 'approved' && <p className="muted">Maaaring abutin ng ilang minuto bago dumating ang email. Tingnan ang inbox at spam folder.</p>}
         <div className="auth-links"><Link to="/login">Bumalik sa pag-log in</Link><Link to="/forgot-password">Magsumite ng panibagong kahilingan</Link></div>
       </div>
     </div>

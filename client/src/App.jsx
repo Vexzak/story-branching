@@ -50,7 +50,7 @@ function AuthProvider({ children }) {
       console.error('Failed to load profile:', err.message);
       setProfile(null);
       if (err.status === 401) {
-        setProfileError('Your login session expired. Please sign in again.');
+        setProfileError('Nag-expire ang iyong sesyon. Mag-sign in muli.');
         // Defer sign-out until after auth-state callbacks finish. Keeping an
         // invalid token in storage makes every page refresh repeat this error.
         window.setTimeout(() => {
@@ -60,7 +60,7 @@ function AuthProvider({ children }) {
         }, 0);
         return null;
       }
-      setProfileError(err.message || 'Could not load your account profile.');
+      setProfileError(err.message || 'Hindi ma-load ang iyong account profile.');
       return null;
     }
   }, []);
@@ -134,14 +134,14 @@ function ProtectedRoute({ role, children }) {
   const { session, profile, profileError, refreshProfile, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return <FullScreenMessage>Loading…</FullScreenMessage>;
+  if (loading) return <FullScreenMessage>Naglo-load…</FullScreenMessage>;
   if (!session) return <Navigate to="/login" state={{ from: location }} replace />;
   if (!profile) {
-    if (!profileError) return <FullScreenMessage>Setting up your account…</FullScreenMessage>;
+    if (!profileError) return <FullScreenMessage>Inihahanda ang iyong account…</FullScreenMessage>;
     return (
       <div className="center-screen">
         <div className="panel stack">
-          <h2>Could not load your account</h2>
+          <h2>Hindi ma-load ang iyong account</h2>
           <p>{profileError}</p>
           <button type="button" className="btn" onClick={refreshProfile}>Subukan muli</button>
         </div>
@@ -213,7 +213,7 @@ function AppShell({ children }) {
         <nav className="topbar-nav">
           {profile?.role === 'admin' ? (
             <>
-              <Link to="/admin">Dashboard</Link>
+              <Link to="/admin">Dashboard ng admin</Link>
               <Link
                 to="/admin/students"
                 className="nav-students-link"
@@ -223,11 +223,11 @@ function AppShell({ children }) {
                 Students
                 {pendingPasswordResets > 0 && <span className="nav-notification-dot" aria-hidden="true" />}
               </Link>
-              <Link to="/admin/stories">Stories</Link>
+              <Link to="/admin/stories">Mga Kuwento</Link>
               {profile?.can_manage_admins && <Link to="/admin/accounts">Mga account ng admin</Link>}
             </>
           ) : (
-            <Link to="/home">Stories</Link>
+            <Link to="/home">Mga Kuwento</Link>
           )}
           <span className="username-chip" title="Signed in as">
             {profile?.username}
@@ -244,14 +244,14 @@ function AppShell({ children }) {
 
 function HomeRedirect() {
   const { session, profile, profileError, refreshProfile, loading } = useAuth();
-  if (loading) return <FullScreenMessage>Loading…</FullScreenMessage>;
+  if (loading) return <FullScreenMessage>Naglo-load…</FullScreenMessage>;
   if (!session) return <Navigate to="/login" replace />;
   if (!profile) {
-    if (!profileError) return <FullScreenMessage>Setting up your account…</FullScreenMessage>;
+    if (!profileError) return <FullScreenMessage>Inihahanda ang iyong account…</FullScreenMessage>;
     return (
       <div className="center-screen">
         <div className="panel stack">
-          <h2>Could not load your account</h2>
+          <h2>Hindi ma-load ang iyong account</h2>
           <p>{profileError}</p>
           <button type="button" className="btn" onClick={refreshProfile}>Subukan muli</button>
         </div>

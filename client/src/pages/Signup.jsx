@@ -25,20 +25,20 @@ export default function Signup() {
 
   function validate() {
     const errors = {};
-    if (!form.email.trim()) errors.email = 'Email address is required.';
+    if (!form.email.trim()) errors.email = 'Tirahang email is required.';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
-      errors.email = 'Enter a valid email address.';
+      errors.email = 'Maglagay ng wastong email address.';
 
     const username = form.username.trim();
-    if (username.length < 3) errors.username = 'Username must be at least 3 characters.';
-    else if (username.length > 30) errors.username = 'Username must be 30 characters or fewer.';
+    if (username.length < 3) errors.username = 'Pangalan ng gumagamit must be at least 3 characters.';
+    else if (username.length > 30) errors.username = 'Pangalan ng gumagamit must be 30 characters or fewer.';
     else if (!USERNAME_PATTERN.test(username))
-      errors.username = 'Use only letters, numbers, dots, dashes, and underscores.';
+      errors.username = 'Gumamit lamang ng mga letra, numero, tuldok, gitling at salungguhit.';
 
-    if (form.password.length < 8) errors.password = 'Password must be at least 8 characters.';
-    else if (form.password.length > 72) errors.password = 'Password must be 72 characters or fewer.';
+    if (form.password.length < 8) errors.password = 'Dapat may hindi bababa sa 8 character ang password.';
+    else if (form.password.length > 72) errors.password = 'Hindi dapat lumampas sa 72 character ang password.';
     if (form.password !== form.confirmPassword)
-      errors.confirmPassword = 'Passwords do not match.';
+      errors.confirmPassword = 'Hindi magkatugma ang mga password.';
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -68,14 +68,14 @@ export default function Signup() {
       });
 
       if (signInError) {
-        setError('Account created. Please log in with your new account.');
+        setError('Nagawa na ang account. Mag-log in gamit ito.');
         navigate('/login');
         return;
       }
 
       navigate('/home', { replace: true });
     } catch (err) {
-      setError(err.message || 'Could not create the account.');
+      setError(err.message || 'Hindi magawa ang account.');
       if (err.details?.fields) setFieldErrors(err.details.fields);
     } finally {
       setBusy(false);
@@ -92,36 +92,36 @@ export default function Signup() {
 
         <form onSubmit={handleSubmit} className="form" noValidate>
           <label className="field">
-            <span>Email address</span>
+            <span>Tirahang email</span>
             <input
               type="email"
               autoComplete="email"
               value={form.email}
               onChange={(e) => update('email', e.target.value)}
-              placeholder="you@example.com"
+              placeholder="halimbawa@email.com"
             />
             {fieldErrors.email && <small className="field-error">{fieldErrors.email}</small>}
           </label>
 
           <label className="field">
-            <span>Username</span>
+            <span>Pangalan ng gumagamit</span>
             <input
               type="text"
               autoComplete="username"
               value={form.username}
               onChange={(e) => update('username', e.target.value)}
-              placeholder="e.g. sam.lee"
+              placeholder="halimbawa: juan.delacruz"
             />
             {fieldErrors.username && <small className="field-error">{fieldErrors.username}</small>}
           </label>
 
           <label className="field">
-            <span>Display name <em>(optional)</em></span>
+            <span>Ipinapakitang pangalan <em>(opsyonal)</em></span>
             <input
               type="text"
               value={form.displayName}
               onChange={(e) => update('displayName', e.target.value)}
-              placeholder="e.g. Sam"
+              placeholder="halimbawa: Juan"
             />
           </label>
 

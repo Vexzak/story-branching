@@ -4,7 +4,7 @@ import { apiFetch } from '../api';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [username, setPangalan ng gumagamit] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const hasSavedRequest = Boolean(
@@ -25,7 +25,7 @@ export default function ForgotPassword() {
       localStorage.setItem('passwordRecoveryTrackingKey', result.trackingKey);
       navigate('/recovery-status');
     } catch (err) {
-      setError(err.message || 'Could not send your request. Please try again.');
+      setError(err.message || 'Hindi maipadala ang kahilingan. Subukan muli.');
     } finally {
       setBusy(false);
     }
@@ -39,15 +39,15 @@ export default function ForgotPassword() {
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit} className="form">
           <label className="field">
-            <span>Username</span>
-            <input required autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} />
+            <span>Pangalan ng gumagamit</span>
+            <input required autoComplete="username" value={username} onChange={(event) => setPangalan ng gumagamit(event.target.value)} />
           </label>
           <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
             {busy ? 'Sending request…' : 'Humiling na magpalit ng password'}
           </button>
         </form>
         <div className="auth-links">
-          <Link to="/login">← Back to login</Link>
+          <Link to="/login">← Bumalik sa pag-log in</Link>
           {hasSavedRequest && <Link to="/recovery-status">Tingnan ang estado ng kahilingan</Link>}
         </div>
       </div>

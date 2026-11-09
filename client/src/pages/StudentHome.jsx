@@ -35,7 +35,7 @@ export default function StudentHome() {
       <div className="kids-title-banner-wrap">
         <img className="kids-title-banner" src="/images/title_banner.png" alt="Pumili ng Kuwento" />
       </div>
-      {loading && <p className="kids-status">Loading stories…</p>}
+      {loading && <p className="kids-status">Naglo-load ng mga kuwento…</p>}
       {error && <div className="alert alert-error">{error}</div>}
       {!loading && !error && stories.length === 0 && (
         <p className="kids-status">Wala pang kuwentong mababasa. Bumalik muli sa susunod.</p>

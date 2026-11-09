@@ -66,11 +66,11 @@ export default function AdminAccounts() {
         <h2>Gumawa ng account ng admin</h2>
         <form className="stack" onSubmit={createAdmin}>
           <label className="field">
-            <span>Email</span>
+            <span>Tirahang email</span>
             <input className="input" type="email" autoComplete="email" required maxLength={254} value={form.email} onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))} />
           </label>
           <label className="field">
-            <span>Username</span>
+            <span>Pangalan ng gumagamit</span>
             <input className="input" autoComplete="username" required minLength={3} maxLength={30} pattern="[A-Za-z0-9_.-]+" value={form.username} onChange={(e) => setForm((v) => ({ ...v, username: e.target.value }))} />
           </label>
           <label className="field">
@@ -85,16 +85,16 @@ export default function AdminAccounts() {
             <input type="checkbox" checked={form.canManageAdmins} onChange={(e) => setForm((v) => ({ ...v, canManageAdmins: e.target.checked }))} />
             <span>Bigyan ng superadmin access para gumawa at magpahintulot ng iba pang admin</span>
           </label>
-          <div><button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Creating…' : 'Gumawa ng account ng admin'}</button></div>
+          <div><button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Ginagawa…' : 'Gumawa ng account ng admin'}</button></div>
         </form>
       </section>
 
       <section className="panel stack">
         <h2>Mga admin</h2>
-        {loading ? <p>Loading accounts…</p> : admins.length === 0 ? <p>Walang nahanap na account ng admin.</p> : (
+        {loading ? <p>Naglo-load ng mga account…</p> : admins.length === 0 ? <p>Walang nahanap na account ng admin.</p> : (
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Pahintulot</th><th>Created</th></tr></thead>
+              <thead><tr><th>Pangalan</th><th>Pangalan ng gumagamit</th><th>Tirahang email</th><th>Pahintulot</th><th>Nagawa noong</th></tr></thead>
               <tbody>{admins.map((admin) => (
                 <tr key={admin.id}>
                   <td>{admin.display_name}</td>

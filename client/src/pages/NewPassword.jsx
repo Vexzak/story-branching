@@ -36,7 +36,7 @@ export default function NewPassword() {
     setBusy(true);
     const { error: updateError } = await supabase.auth.updateUser({ password });
     if (updateError) {
-      setError(updateError.message || 'Could not update your password. The reset link may have expired.');
+      setError(updateError.message || 'Hindi mapalitan ang password. Maaaring nag-expire na ang link.');
       setBusy(false);
       return;
     }
@@ -48,7 +48,7 @@ export default function NewPassword() {
       } catch { /* Password is already changed; status update is best-effort. */ }
       localStorage.removeItem('passwordRecoveryTrackingKey');
     }
-    navigate('/login', { replace: true, state: { message: 'Your password has been changed. Please log in.' } });
+    navigate('/login', { replace: true, state: { message: 'Napaltan na ang password mo. Mag-log in na.' } });
   }
 
   return (
