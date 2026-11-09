@@ -476,7 +476,7 @@ export default function StoryPlayer() {
         <div className="vn-box vn-failure-panel vn-narration-panel">
           <div className="vn-name">{failure.scene?.title || 'Not quite'}</div>
           <p className="vn-text">
-            {failure.scene?.narration || 'That was not the right choice.'}
+            {failure.scene?.narration || 'Hindi iyon ang tamang sagot.'}
           </p>
           {failure.feedback && <p className="vn-sub">{failure.feedback}</p>}
           <div className="vn-choices">

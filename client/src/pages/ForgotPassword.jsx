@@ -34,8 +34,8 @@ export default function ForgotPassword() {
   return (
     <div className="center-screen kids-theme">
       <div className="auth-card">
-        <h1 className="auth-title">Forgot your password?</h1>
-        <p className="auth-subtitle">Enter your username. An administrator will review your request. If approved, a password reset link will be sent to the email address on your account.</p>
+        <h1 className="auth-title">Nakalimutan ang password?</h1>
+        <p className="auth-subtitle">Ilagay ang username mo. Susuriin ng admin ang kahilingan. Kapag naaprubahan, ipapadala sa email na nasa account mo ang link para magpalit ng password.</p>
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit} className="form">
           <label className="field">
@@ -43,12 +43,12 @@ export default function ForgotPassword() {
             <input required autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} />
           </label>
           <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
-            {busy ? 'Sending request…' : 'Request password reset'}
+            {busy ? 'Sending request…' : 'Humiling na magpalit ng password'}
           </button>
         </form>
         <div className="auth-links">
           <Link to="/login">← Back to login</Link>
-          {hasSavedRequest && <Link to="/recovery-status">Check request status</Link>}
+          {hasSavedRequest && <Link to="/recovery-status">Tingnan ang estado ng kahilingan</Link>}
         </div>
       </div>
     </div>

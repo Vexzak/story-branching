@@ -20,7 +20,7 @@ function timeAgo(d) {
 
 const STATUS = {
   in_progress: ['In progress', 'info'],
-  completed: ['Completed', 'ok'],
+  completed: ['Natapos', 'ok'],
   abandoned: ['Abandoned', 'warn'],
 };
 
@@ -180,26 +180,26 @@ function PasswordResetRequests() {
     <section className="panel stack">
       <div className="page-heading">
         <div>
-          <h2>Password reset requests</h2>
+          <h2>Mga kahilingan sa pagpapalit ng password</h2>
           <p className="muted">Approve or reject student requests. Approved students receive a reset link at their registered email.</p>
         </div>
       </div>
       {error && <div className="alert alert-error">{error}</div>}
       {loading ? <p className="muted">Loading requests…</p> : requests.length === 0 ? (
-        <p className="muted">No requests are awaiting review.</p>
+        <p className="muted">Walang kahilingang naghihintay ng pagsusuri.</p>
       ) : (
         <div className="table-wrap">
           <table className="table">
-            <thead><tr><th>Student</th><th>Requested</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Mag-aaral</th><th>Requested</th><th>Mga aksyon</th></tr></thead>
             <tbody>{requests.map((request) => (
               <tr key={request.id}>
-                <td>{request.student?.display_name || request.student?.username || 'Student'} <span className="muted">({request.student?.username})</span></td>
+                <td>{request.student?.display_name || request.student?.username || 'Mag-aaral'} <span className="muted">({request.student?.username})</span></td>
                 <td>{new Date(request.requested_at).toLocaleString()}</td>
                 <td className="table-actions">
                   <button type="button" className="btn btn-primary" disabled={Boolean(reviewing)} onClick={() => review(request.id, 'approved')}>
                     {reviewing === request.id ? 'Saving…' : 'Approve'}
                   </button>
-                  <button type="button" className="btn" disabled={Boolean(reviewing)} onClick={() => review(request.id, 'rejected')}>Reject</button>
+                  <button type="button" className="btn" disabled={Boolean(reviewing)} onClick={() => review(request.id, 'rejected')}>Tanggihan</button>
                 </td>
               </tr>
             ))}</tbody>
@@ -240,7 +240,7 @@ function StudentList({ listState, setListState, onOpen }) {
     <div className="stack">
       <div className="rec-head">
         <div>
-          <h1 className="rec-title">Students</h1>
+          <h1 className="rec-title">Mga mag-aaral</h1>
           <p className="rec-sub">
             {data ? `${plural(data.total, 'student')}${search ? ` matching “${search}”` : ''}` : 'Loading…'}
           </p>
@@ -253,7 +253,7 @@ function StudentList({ listState, setListState, onOpen }) {
             type="text"
             className="rec-search"
             value={input}
-            placeholder="Search by username or display name"
+            placeholder="Maghanap gamit ang username o ipinapakitang pangalan"
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && runSearch()}
           />
@@ -280,18 +280,18 @@ function StudentList({ listState, setListState, onOpen }) {
       {data && (
         <div className="rec-card rec-flush">
           {data.students.length === 0 ? (
-            <p className="rec-empty">No students found.</p>
+            <p className="rec-empty">Walang nahanap na mag-aaral.</p>
           ) : (
             <div className="rec-wrap">
               <table className="rec-table">
                 <thead>
                   <tr>
-                    <th>Student</th>
+                    <th>Mag-aaral</th>
                     <th>Email</th>
-                    <th>Registered</th>
-                    <th>Sessions</th>
-                    <th>Completed</th>
-                    <th>Last active</th>
+                    <th>Nagparehistro</th>
+                    <th>Mga sesyon</th>
+                    <th>Natapos</th>
+                    <th>Huling aktibo</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -469,7 +469,7 @@ function StudentDetail({ studentId, onBack, onOpenSession, onOpenStory }) {
 
         {confirming && (
           <div className="rec-danger">
-            <strong>Delete this student permanently?</strong>
+            <strong>Permanenteng burahin ang mag-aaral na ito?</strong>
             <p className="rec-muted">
               This removes the account, the sign-in, and all of this student&apos;s game sessions and
               choice history. It cannot be undone.
@@ -504,7 +504,7 @@ function StudentDetail({ studentId, onBack, onOpenSession, onOpenStory }) {
           <div className="sd-head">
             <DashIcon name="answers" tone="blue" />
             <div>
-              <h2>Answers</h2>
+              <h2>Mga sagot</h2>
               <p className="sd-sub">Choice selections across all stories</p>
             </div>
           </div>
@@ -520,7 +520,7 @@ function StudentDetail({ studentId, onBack, onOpenSession, onOpenStory }) {
           </div>
 
           <div className="sd-rows">
-            {storyRows.length === 0 && <p className="sd-sub">No answers yet.</p>}
+            {storyRows.length === 0 && <p className="sd-sub">Wala pang sagot.</p>}
             {storyRows.map((r, i) => (
               <div key={r.id} className="sd-row">
                 <span className="sd-dot" style={{ background: STORY_COLORS[i % STORY_COLORS.length] }} />
@@ -533,17 +533,17 @@ function StudentDetail({ studentId, onBack, onOpenSession, onOpenStory }) {
 
           <div className="sd-boxes">
             <div className="sd-box sd-box-ok">
-              <span className="sd-box-tag">Correct</span>
+              <span className="sd-box-tag">Tama</span>
               <strong>{stats.correct_selections}</strong>
               <small>{pct(stats.correct_selections, stats.total_selections)}% accuracy</small>
             </div>
             <div className="sd-box sd-box-bad">
-              <span className="sd-box-tag">Incorrect</span>
+              <span className="sd-box-tag">Mali</span>
               <strong>{stats.incorrect_selections}</strong>
               <small>wrong answers</small>
             </div>
             <div className="sd-box sd-box-total">
-              <span className="sd-box-tag">Total selections</span>
+              <span className="sd-box-tag">Kabuuang pinili</span>
               <strong>{stats.total_selections}</strong>
               <small>{plural(stats.total_sessions, 'playthrough')}</small>
             </div>
@@ -555,7 +555,7 @@ function StudentDetail({ studentId, onBack, onOpenSession, onOpenStory }) {
             <div className="sd-head">
               <DashIcon name="plays" tone="blue" />
               <div>
-                <h2>Playthroughs</h2>
+                <h2>Mga paglalaro</h2>
                 <p className="sd-sub">Times this student played</p>
               </div>
             </div>
@@ -566,13 +566,13 @@ function StudentDetail({ studentId, onBack, onOpenSession, onOpenStory }) {
             <div className="sd-head">
               <DashIcon name="done" tone="green" />
               <div>
-                <h2>Progress</h2>
+                <h2>Progreso</h2>
                 <p className="sd-sub">How the playthroughs are going</p>
               </div>
             </div>
             <div className="sd-tint sd-tint-ok">
               <div>
-                <strong>Completed</strong>
+                <strong>Natapos</strong>
                 <small>Finished the story</small>
               </div>
               <div className="sd-tint-value">
@@ -595,7 +595,7 @@ function StudentDetail({ studentId, onBack, onOpenSession, onOpenStory }) {
       </div>
 
       <div className="rec-card">
-        <h2>Stories played</h2>
+        <h2>Mga kuwentong nilaro</h2>
         {byStory.size === 0 ? (
           <p className="rec-muted">This student has not played any stories yet.</p>
         ) : (
@@ -624,21 +624,21 @@ function StudentDetail({ studentId, onBack, onOpenSession, onOpenStory }) {
       </div>
 
       <div className="rec-card rec-flush">
-        <h2 className="rec-pad">Session history</h2>
+        <h2 className="rec-pad">Kasaysayan ng sesyon</h2>
         {sessions.length === 0 ? (
-          <p className="rec-empty">No sessions yet.</p>
+          <p className="rec-empty">Wala pang sesyon.</p>
         ) : (
           <div className="rec-wrap">
             <table className="rec-table">
               <thead>
                 <tr>
-                  <th>Story</th>
-                  <th>Status</th>
-                  <th>Started</th>
-                  <th>Last active</th>
-                  <th>Selections</th>
-                  <th>Correct</th>
-                  <th>Incorrect</th>
+                  <th>Kuwento</th>
+                  <th>Estado</th>
+                  <th>Nagsimula</th>
+                  <th>Huling aktibo</th>
+                  <th>Mga pinili</th>
+                  <th>Tama</th>
+                  <th>Mali</th>
                   <th></th>
                 </tr>
               </thead>
@@ -733,7 +733,7 @@ function StoryPerformance({ studentId, storyId, onBack, onOpenSession }) {
       </div>
 
       <div className="rec-tiles">
-        <Tile tone="info" value={sessions.length} label="Playthroughs" />
+        <Tile tone="info" value={sessions.length} label="Mga paglalaro" />
         <Tile tone="ok" value={completed} label="Completed playthroughs" />
         <Tile value={totals.selections} label="Choice selections (total)" />
         <Tile tone="bad" value={totals.fails} label="Total fails (incorrect selections)" />
@@ -746,7 +746,7 @@ function StoryPerformance({ studentId, storyId, onBack, onOpenSession }) {
       </div>
 
       <div className="rec-card rec-flush">
-        <h2 className="rec-pad">Decision by decision</h2>
+        <h2 className="rec-pad">Bawat pasya</h2>
         <p className="rec-muted rec-pad">
           Every Eksena of the story is listed in story order. Each Run column is one playthrough. A fail is a wrong
           answer picked before the right one, so &quot;✓ after 2 fails&quot; means two wrong tries, then the right answer.
@@ -759,7 +759,7 @@ function StoryPerformance({ studentId, storyId, onBack, onOpenSession }) {
               <thead>
                 <tr>
                   <th>Eksena</th>
-                  <th>Total selections</th>
+                  <th>Kabuuang pinili</th>
                   <th>Wrong tries (fails)</th>
                   <th>Solved in</th>
                   <th>Avg tries to solve</th>
@@ -778,7 +778,7 @@ function StoryPerformance({ studentId, storyId, onBack, onOpenSession }) {
                     <td className={d.total_fails > 0 ? 'rec-failnum' : ''}>{d.total_fails}</td>
                     <td>
                       {d.sessions_reached === 0 ? (
-                        <Badge kind="info">Not reached yet</Badge>
+                        <Badge kind="info">Hindi pa nararating</Badge>
                       ) : (
                         `${d.sessions_resolved}/${d.sessions_reached} runs`
                       )}
@@ -798,15 +798,15 @@ function StoryPerformance({ studentId, storyId, onBack, onOpenSession }) {
       </div>
 
       <div className="rec-card rec-flush">
-        <h2 className="rec-pad">Playthroughs</h2>
+        <h2 className="rec-pad">Mga paglalaro</h2>
         <div className="rec-wrap">
           <table className="rec-table">
             <thead>
               <tr>
                 <th>Run</th>
-                <th>Status</th>
-                <th>Started</th>
-                <th>Selections</th>
+                <th>Estado</th>
+                <th>Nagsimula</th>
+                <th>Mga pinili</th>
                 <th>Fails</th>
                 <th></th>
               </tr>
@@ -903,7 +903,7 @@ function SessionDetail({ sessionId, onBack }) {
                 <tr>
                   <th>Decision</th>
                   <th>Selections (attempts)</th>
-                  <th>Incorrect</th>
+                  <th>Mali</th>
                   <th>Resolved</th>
                 </tr>
               </thead>
@@ -927,10 +927,10 @@ function SessionDetail({ sessionId, onBack }) {
       </div>
 
       <div className="rec-card rec-flush">
-        <h2 className="rec-pad">Chronological activity</h2>
+        <h2 className="rec-pad">Mga aktibidad ayon sa oras</h2>
         <p className="rec-muted rec-pad">Only decision choices are logged. Story-continue clicks are not.</p>
         {entries.length === 0 ? (
-          <p className="rec-empty">No choices were recorded.</p>
+          <p className="rec-empty">Walang naitalang pagpili.</p>
         ) : (
           <div className="rec-wrap">
             <table className="rec-table">
@@ -956,7 +956,7 @@ function SessionDetail({ sessionId, onBack }) {
                     </td>
                     <td>{e.choice_text}</td>
                     <td>
-                      <Badge kind={e.is_correct ? 'ok' : 'bad'}>{e.is_correct ? 'Correct' : 'Incorrect'}</Badge>
+                      <Badge kind={e.is_correct ? 'ok' : 'bad'}>{e.is_correct ? 'Tama' : 'Mali'}</Badge>
                     </td>
                     <td>{e.attempt_number}</td>
                     <td>

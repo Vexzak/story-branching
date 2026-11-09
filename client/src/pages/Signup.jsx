@@ -85,8 +85,8 @@ export default function Signup() {
   return (
     <div className="center-screen kids-theme">
       <div className="auth-card">
-        <h1 className="auth-title">Create your account</h1>
-        <p className="auth-subtitle">Students can sign up here. Ask your teacher for an admin account.</p>
+        <h1 className="auth-title">Gumawa ng account</h1>
+        <p className="auth-subtitle">Dito maaaring gumawa ng account ang mga mag-aaral. Humingi sa guro ng account ng admin.</p>
 
         {error && <div className="alert alert-error">{error}</div>}
 
@@ -132,19 +132,19 @@ export default function Signup() {
               autoComplete="new-password"
               value={form.password}
               onChange={(e) => update('password', e.target.value)}
-              placeholder="At least 8 characters"
+              placeholder="Hindi bababa sa 8 character"
             />
             {fieldErrors.password && <small className="field-error">{fieldErrors.password}</small>}
           </label>
 
           <label className="field">
-            <span>Confirm password</span>
+            <span>Kumpirmahin ang password</span>
             <input
               type="password"
               autoComplete="new-password"
               value={form.confirmPassword}
               onChange={(e) => update('confirmPassword', e.target.value)}
-              placeholder="Repeat your password"
+              placeholder="Ilagay muli ang password"
             />
             {fieldErrors.confirmPassword && (
               <small className="field-error">{fieldErrors.confirmPassword}</small>
@@ -157,7 +157,7 @@ export default function Signup() {
         </form>
 
         <div className="auth-links">
-          <Link to="/login">Already have an account? Log in</Link>
+          <Link to="/login">May account ka na? Mag-log in</Link>
         </div>
       </div>
     </div>

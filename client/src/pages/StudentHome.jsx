@@ -19,7 +19,7 @@ export default function StudentHome() {
         const { stories: list } = await apiFetch('/stories');
         if (active) setStories(list);
       } catch (err) {
-        if (active) setError(err.message || 'Could not load stories.');
+        if (active) setError(err.message || 'Hindi ma-load ang mga kuwento.');
       } finally {
         if (active) setLoading(false);
       }
@@ -38,7 +38,7 @@ export default function StudentHome() {
       {loading && <p className="kids-status">Loading stories…</p>}
       {error && <div className="alert alert-error">{error}</div>}
       {!loading && !error && stories.length === 0 && (
-        <p className="kids-status">No stories are available yet. Please check back soon.</p>
+        <p className="kids-status">Wala pang kuwentong mababasa. Bumalik muli sa susunod.</p>
       )}
 
       <div className="kids-shelf">
@@ -72,7 +72,7 @@ export default function StudentHome() {
               </button>
 
               <p className="kids-bubble">
-                {locked ? 'Finish the last story to unlock!' : story.description}
+                {locked ? 'Tapusin ang naunang kuwento para mabuksan ito!' : story.description}
               </p>
             </div>
           );

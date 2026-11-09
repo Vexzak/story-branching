@@ -5,11 +5,11 @@ import { apiFetch } from '../api';
 import { useAuth } from '../App';
 
 const recoveryNotices = {
-  pending: { tone: 'alert-warn', text: 'Your password reset request is waiting for an administrator to review it.' },
-  approved: { tone: 'alert-success', text: 'Your password reset request was approved. Check your registered email for the reset link.' },
-  rejected: { tone: 'alert-error', text: 'Your password reset request was rejected. Please ask your teacher or administrator for help.' },
-  completed: { tone: 'alert-success', text: 'Your password was changed successfully. You can log in with your new password.' },
-  expired: { tone: 'alert-warn', text: 'Your password reset request expired. Please submit a new request.' },
+  pending: { tone: 'alert-warn', text: 'Naghihintay ang kahilingan mong magpalit ng password na masuri ng admin.' },
+  approved: { tone: 'alert-success', text: 'Naaprubahan ang kahilingan mong magpalit ng password. Tingnan ang nakarehistro mong email para sa link.' },
+  rejected: { tone: 'alert-error', text: 'Tinanggihan ang kahilingan mong magpalit ng password. Humingi ng tulong sa guro o admin.' },
+  completed: { tone: 'alert-success', text: 'Matagumpay na napalitan ang password mo. Maaari ka nang mag-log in gamit ang bago mong password.' },
+  expired: { tone: 'alert-warn', text: 'Nag-expire ang kahilingan mong magpalit ng password. Magsumite ng bago.' },
 };
 
 export default function Login() {
@@ -80,7 +80,7 @@ export default function Login() {
     if (signInError) {
       setError(
         /invalid login/i.test(signInError.message)
-          ? 'Incorrect email or password.'
+          ? 'Mali ang email o password.'
           : signInError.message
       );
     }
@@ -91,9 +91,9 @@ export default function Login() {
     <div className="center-screen kids-theme">
       <div className="auth-card">
         <h1 className="auth-title">📖 Story Adventures</h1>
-        <p className="auth-subtitle">Sign in to continue your stories.</p>
+        <p className="auth-subtitle">Mag-sign in para maipagpatuloy ang mga kuwento mo.</p>
 
-        {recoveryNotice && <div className={`alert ${recoveryNotice.tone}`} role="status" aria-live="polite">{recoveryNotice.text} <Link to="/recovery-status">View request</Link></div>}
+        {recoveryNotice && <div className={`alert ${recoveryNotice.tone}`} role="status" aria-live="polite">{recoveryNotice.text} <Link to="/recovery-status">Tingnan ang kahilingan</Link></div>}
         {error && <div className="alert alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="form">
@@ -117,18 +117,18 @@ export default function Login() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Your password"
+              placeholder="Ilagay ang password mo"
             />
           </label>
 
           <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
-            {busy ? 'Signing in…' : 'Log in'}
+            {busy ? 'Signing in…' : 'Mag-log in'}
           </button>
         </form>
 
         <div className="auth-links">
-          <Link to="/forgot-password">Forgot password?</Link>
-          <Link to="/signup">Create an account</Link>
+          <Link to="/forgot-password">Nakalimutan ang password?</Link>
+          <Link to="/signup">Gumawa ng account</Link>
         </div>
       </div>
     </div>

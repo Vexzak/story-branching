@@ -7,16 +7,16 @@ function RecentActivity({ sessions }) {
   return (
     <section className="analytics-panel analytics-recent-panel">
       <div className="analytics-panel-heading">
-        <div><h2>Recent activity</h2><p>The latest student story sessions.</p></div>
-        <Link to="/admin/students">View students</Link>
+        <div><h2>Kamakailang aktibidad</h2><p>Pinakabagong sesyon ng mga mag-aaral sa kuwento.</p></div>
+        <Link to="/admin/students">Tingnan ang mga mag-aaral</Link>
       </div>
-      {sessions.length === 0 ? <p className="analytics-empty-chart">No story sessions yet.</p> : (
+      {sessions.length === 0 ? <p className="analytics-empty-chart">Wala pang sesyon sa kuwento.</p> : (
         <div className="table-wrap">
           <table className="table">
-            <thead><tr><th>Student</th><th>Story</th><th>Status</th><th>Last activity</th></tr></thead>
+            <thead><tr><th>Mag-aaral</th><th>Kuwento</th><th>Estado</th><th>Huling aktibidad</th></tr></thead>
             <tbody>{sessions.map((session) => (
               <tr key={session.id}>
-                <td>{session.profiles?.display_name || session.profiles?.username || 'Student'}</td>
+                <td>{session.profiles?.display_name || session.profiles?.username || 'Mag-aaral'}</td>
                 <td>{session.stories?.title || '—'}</td>
                 <td><span className={`badge badge-${session.status}`}>{session.status.replace('_', ' ')}</span></td>
                 <td>{session.last_activity_at ? new Date(session.last_activity_at).toLocaleString() : '—'}</td>
@@ -44,7 +44,7 @@ export default function AdminDashboard() {
       ]);
       setData({ dashboard, analytics });
     } catch (err) {
-      setError(err.message || 'Could not load the dashboard analytics.');
+      setError(err.message || 'Hindi ma-load ang datos ng dashboard.');
     } finally {
       setLoading(false);
     }
@@ -56,16 +56,16 @@ export default function AdminDashboard() {
     return <div className="admin-analytics-page analytics-loading"><span className="analytics-loading-spinner" /><p>Gathering story progress…</p></div>;
   }
   if (error && !data) {
-    return <div className="admin-analytics-page analytics-error"><h1>Could not load analytics</h1><p>{error}</p><button type="button" className="btn btn-primary" onClick={load}>Try again</button></div>;
+    return <div className="admin-analytics-page analytics-error"><h1>Hindi ma-load ang datos</h1><p>{error}</p><button type="button" className="btn btn-primary" onClick={load}>Subukan muli</button></div>;
   }
 
   return (
     <div className="stack admin-analytics-page">
       <div className="analytics-page-heading">
-        <div><p className="analytics-eyebrow">Teacher overview</p><h1>Story analytics</h1><p>See how students are progressing through your published stories.</p></div>
-        <Link className="btn btn-primary" to="/admin/stories">Manage stories</Link>
+        <div><p className="analytics-eyebrow">Buod para sa guro</p><h1>Datos ng mga kuwento</h1><p>Tingnan ang progreso ng mga mag-aaral sa mga nailathalang kuwento.</p></div>
+        <Link className="btn btn-primary" to="/admin/stories">Pamahalaan ang mga kuwento</Link>
       </div>
-      {error && <div className="alert alert-error">{error} <button type="button" className="analytics-retry-link" onClick={load}>Refresh analytics</button></div>}
+      {error && <div className="alert alert-error">{error} <button type="button" className="analytics-retry-link" onClick={load}>I-refresh ang datos</button></div>}
       <StoryAnalyticsDashboard analytics={data.analytics} />
       <RecentActivity sessions={data.dashboard.recentActivity || []} />
     </div>

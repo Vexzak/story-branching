@@ -605,9 +605,9 @@ async function uploadImage(storyId, kind, sceneId, file) {
 
 async function uploadSceneAudio(storyId, sceneId, file) {
   if (file.type && !['audio/mpeg', 'audio/mp3', 'application/octet-stream'].includes(file.type)) {
-    throw new Error('Choose an MP3 audio file.');
+    throw new Error('Pumili ng MP3 audio file.');
   }
-  if (!file.name.toLowerCase().endsWith('.mp3')) throw new Error('Choose an MP3 audio file.');
+  if (!file.name.toLowerCase().endsWith('.mp3')) throw new Error('Pumili ng MP3 audio file.');
   if (file.size > MAX_AUDIO_BYTES) throw new Error('That audio file is larger than 20 MB.');
   const { data } = await supabase.auth.getSession();
   const token = data?.session?.access_token;
@@ -1320,7 +1320,7 @@ function StoryEditor({ storyId, onClose }) {
         </div>
         <div className="ed-topbar-actions">
           <span className={dirty ? 'ed-save-state ed-save-dirty' : 'ed-save-state'}>
-            {busy ? 'Working…' : dirty ? 'Unsaved changes' : '✓ All saved'}
+            {busy ? 'Working…' : dirty ? 'May pagbabagong hindi pa nase-save' : '✓ All saved'}
           </span>
           <button type="button" className="ed-btn ed-btn-primary" disabled={busy || !dirty} onClick={saveAll}>
             Save
@@ -1427,7 +1427,7 @@ function StoryEditor({ storyId, onClose }) {
           </div>
 
           <div className="ed-field">
-            <span className="ed-label">Cover picture</span>
+            <span className="ed-label">Larawan sa pabalat</span>
             <div className="ed-media">
               {story.cover_image_path ? (
                 <img className="ed-media-preview" src={story.cover_image_path} alt="Cover preview" />
@@ -1436,7 +1436,7 @@ function StoryEditor({ storyId, onClose }) {
               )}
               <div className="ed-row">
                 <label className={busy ? 'ed-btn ed-file ed-disabled' : 'ed-btn ed-file'}>
-                  {story.cover_image_path ? 'Change picture' : 'Upload picture'}
+                  {story.cover_image_path ? 'Palitan ang larawan' : 'Mag-upload ng larawan'}
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
@@ -1480,12 +1480,12 @@ function StoryEditor({ storyId, onClose }) {
             onPick={selectScene}
           />
           <aside className="ed-card ed-sidebar">
-            <h2>Your scenes</h2>
+            <h2>Mga eksena mo</h2>
             <p className="ed-hint">A scene is one screen of the story. Tap one to edit it, and drag ⋮⋮ to change the order.</p>
 
             {scenes.length === 0 && (
               <div className="ed-empty">
-                <p>No scenes yet. Add the first one to begin.</p>
+                <p>Wala pang eksena. Idagdag ang una para makapagsimula.</p>
               </div>
             )}
 
@@ -1581,7 +1581,7 @@ function StoryEditor({ storyId, onClose }) {
             </ol>
 
             <div className="ed-add">
-              <span className="ed-label">Add a scene</span>
+              <span className="ed-label">Magdagdag ng eksena</span>
               <div className="ed-add-grid">
                 {TYPE_ORDER.map((t) => (
                   <button
@@ -1607,7 +1607,7 @@ function StoryEditor({ storyId, onClose }) {
           <section className="ed-card ed-main">
             {!sceneForm ? (
               <div className="ed-empty">
-                <p>Pick a scene on the left, or add a new one.</p>
+                <p>Pumili ng eksena sa kaliwa o magdagdag ng bago.</p>
               </div>
             ) : (
               <>
@@ -1616,7 +1616,7 @@ function StoryEditor({ storyId, onClose }) {
                     <SceneIcon type={type} size={24} />
                   </span>
                   <div>
-                    <h2>Edit scene</h2>
+                    <h2>Baguhin ang eksena</h2>
                     <p className="ed-hint">{typeInfo?.help}</p>
                   </div>
                                     <button
@@ -1723,7 +1723,7 @@ function StoryEditor({ storyId, onClose }) {
                     )}
                     <div className="ed-row">
                       <label className={busy ? 'ed-btn ed-file ed-disabled' : 'ed-btn ed-file'}>
-                        {currentScene?.background_image_path ? 'Change picture' : 'Upload picture'}
+                        {currentScene?.background_image_path ? 'Palitan ang larawan' : 'Mag-upload ng larawan'}
                         <input
                           type="file"
                           accept="image/png,image/jpeg,image/webp"

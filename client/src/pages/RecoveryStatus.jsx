@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { apiFetch } from '../api';
 
 const messages = {
-  pending: 'Your request was sent. An administrator will review it soon.',
-  approved: 'Your request was approved. Check the email address on your account for a secure password reset link.',
-  rejected: 'Your request was rejected by an administrator. Please contact your teacher or administrator if you still need help.',
-  expired: 'This request has expired. Please submit a new password reset request.',
+  pending: 'Naipadala ang kahilingan mo. Susuriin ito ng admin sa lalong madaling panahon.',
+  approved: 'Naaprubahan ang kahilingan mo. Tingnan ang email sa account mo para sa ligtas na link sa pagpapalit ng password.',
+  rejected: 'Tinanggihan ng admin ang kahilingan mo. Makipag-ugnayan sa guro o admin kung kailangan mo pa ng tulong.',
+  expired: 'Nag-expire ang kahilingang ito. Magsumite ng bagong kahilingan para magpalit ng password.',
   completed: 'Your password was changed successfully. You can now log in with your new password.',
 };
 
@@ -21,7 +21,7 @@ export default function RecoveryStatus() {
     const trackingKey = localStorage.getItem('passwordRecoveryTrackingKey');
     if (!trackingKey) {
       if (!localStorage.getItem('passwordRecoveryFinalStatus')) {
-        setError('No recovery request is saved in this browser. Please submit a new request.');
+        setError('Walang naka-save na kahilingan sa browser na ito. Magsumite ng bagong kahilingan.');
       }
       return undefined;
     }
@@ -53,10 +53,10 @@ export default function RecoveryStatus() {
   return (
     <div className="center-screen kids-theme">
       <div className="auth-card">
-        <h1 className="auth-title">Password recovery status</h1>
+        <h1 className="auth-title">Estado ng kahilingan sa pagpapalit ng password</h1>
         {request ? <p className="auth-subtitle" role="status">{messages[request.status] || `Request status: ${request.status}`}</p> : <p className="auth-subtitle">{error || 'Checking your request…'}</p>}
         {request?.status === 'approved' && <p className="muted">The reset email can take a few minutes to arrive. Check your inbox and spam folder.</p>}
-        <div className="auth-links"><Link to="/login">Back to login</Link><Link to="/forgot-password">Submit another request</Link></div>
+        <div className="auth-links"><Link to="/login">Bumalik sa pag-log in</Link><Link to="/forgot-password">Magsumite ng panibagong kahilingan</Link></div>
       </div>
     </div>
   );

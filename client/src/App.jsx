@@ -143,7 +143,7 @@ function ProtectedRoute({ role, children }) {
         <div className="panel stack">
           <h2>Could not load your account</h2>
           <p>{profileError}</p>
-          <button type="button" className="btn" onClick={refreshProfile}>Try again</button>
+          <button type="button" className="btn" onClick={refreshProfile}>Subukan muli</button>
         </div>
       </div>
     );
@@ -218,13 +218,13 @@ function AppShell({ children }) {
                 to="/admin/students"
                 className="nav-students-link"
                 title={pendingPasswordResets ? `${pendingPasswordResets} pending password reset request${pendingPasswordResets === 1 ? '' : 's'}` : undefined}
-                aria-label={pendingPasswordResets ? `Students, ${pendingPasswordResets} pending password reset request${pendingPasswordResets === 1 ? '' : 's'}` : 'Students'}
+                aria-label={pendingPasswordResets ? `Students, ${pendingPasswordResets} pending password reset request${pendingPasswordResets === 1 ? '' : 's'}` : 'Mga mag-aaral'}
               >
                 Students
                 {pendingPasswordResets > 0 && <span className="nav-notification-dot" aria-hidden="true" />}
               </Link>
               <Link to="/admin/stories">Stories</Link>
-              {profile?.can_manage_admins && <Link to="/admin/accounts">Admin accounts</Link>}
+              {profile?.can_manage_admins && <Link to="/admin/accounts">Mga account ng admin</Link>}
             </>
           ) : (
             <Link to="/home">Stories</Link>
@@ -253,7 +253,7 @@ function HomeRedirect() {
         <div className="panel stack">
           <h2>Could not load your account</h2>
           <p>{profileError}</p>
-          <button type="button" className="btn" onClick={refreshProfile}>Try again</button>
+          <button type="button" className="btn" onClick={refreshProfile}>Subukan muli</button>
         </div>
       </div>
     );

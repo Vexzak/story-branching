@@ -125,8 +125,8 @@ function LoadingScreen({ progress, error, onRetry }) {
       <section className="asset-card">
         <div className="asset-brand-mark" aria-hidden="true">✦</div>
         <p className="asset-brand">ISIP-SANGAY</p>
-        <h1>Preparing Your Stories</h1>
-        <p className="asset-description">A little preparation now means your adventures are ready when you are.</p>
+        <h1>Inihahanda ang mga kuwento mo</h1>
+        <p className="asset-description">Ihanda ngayon para handa na ang mga pakikipagsapalaran mo.</p>
         {!error ? (
           <>
             <p className="asset-status">{progress.status}</p>
@@ -134,12 +134,12 @@ function LoadingScreen({ progress, error, onRetry }) {
               <span className="asset-progress-fill" style={{ width: `${percent}%` }} />
             </div>
             <div className="asset-progress-caption"><strong>{progress.total ? percent : progress.status === 'Your stories are ready!' ? 100 : 0}%</strong><span>{progress.complete} / {progress.total} assets saved</span></div>
-            <p className="asset-footnote">Keep this page open while the stories are saved on this device.</p>
+            <p className="asset-footnote">Panatilihing bukas ang pahina habang sine-save ang mga kuwento sa device na ito.</p>
           </>
         ) : (
           <div className="asset-error" role="alert">
             <p>{error}</p>
-            <button type="button" className="btn" onClick={onRetry}>Retry download</button>
+            <button type="button" className="btn" onClick={onRetry}>Subukang i-download muli</button>
           </div>
         )}
       </section>

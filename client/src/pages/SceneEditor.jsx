@@ -163,7 +163,7 @@ function loadImage(src) {
       imageCache.set(src, el);
       resolve(el);
     };
-    el.onerror = () => reject(new Error('Could not load that image.'));
+    el.onerror = () => reject(new Error('Hindi ma-load ang larawang iyon.'));
     el.src = src;
   });
 }
@@ -187,7 +187,7 @@ function useLoadedImage(src) {
 }
 
 async function uploadAsset(storyId, file) {
-  if (!ASSET_TYPES.includes(file.type)) throw new Error('Choose a PNG, WebP or JPEG image.');
+  if (!ASSET_TYPES.includes(file.type)) throw new Error('Pumili ng PNG, WebP o JPEG na larawan.');
   if (file.size > MAX_ASSET_BYTES) throw new Error(`${file.name} is larger than 5 MB.`);
 
   const { data } = await supabase.auth.getSession();
@@ -467,7 +467,7 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
             notify('error', err.message, 9000);
           }
         }
-        if (urls.length) notify('success', urls.length === 1 ? 'Picture uploaded.' : `${urls.length} pictures uploaded.`, 3000);
+        if (urls.length) notify('success', urls.length === 1 ? 'Na-upload na ang larawan.' : `${urls.length} pictures uploaded.`, 3000);
       } finally {
         setUploading(false);
       }
@@ -694,16 +694,16 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
         body: { character_config: objects.length ? { version: 1, objects } : null },
       });
       setSavedJson(JSON.stringify(objects));
-      notify('success', 'Scene layout saved. Publish the story to show it to students.', 4000);
+      notify('success', 'Na-save ang ayos ng eksena. I-publish ang kuwento para makita ito ng mga mag-aaral.', 4000);
     } catch (err) {
-      notify('error', err.message || 'Could not save the layout.', 9000);
+      notify('error', err.message || 'Hindi ma-save ang ayos.', 9000);
     } finally {
       setSaving(false);
     }
   }
 
   const requestClose = () => {
-    if (dirty && !window.confirm('You have unsaved changes to this layout. Leave without saving?')) return;
+    if (dirty && !window.confirm('May mga pagbabagong hindi pa nase-save. Umalis nang hindi sine-save?')) return;
     onClose();
   };
 
@@ -739,7 +739,7 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
         </div>
         <div className="se-bar-actions">
           <span className={dirty ? 'ed-save-state ed-save-dirty' : 'ed-save-state'}>
-            {saving ? 'Saving…' : dirty ? 'Unsaved changes' : '✓ All saved'}
+            {saving ? 'Saving…' : dirty ? 'May pagbabagong hindi pa nase-save' : '✓ All saved'}
           </span>
           <button type="button" className="ed-btn ed-btn-primary" disabled={saving || !dirty} onClick={save}>
             Save scene
@@ -784,7 +784,7 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
                 uploadFiles(e.dataTransfer.files);
               }}
             >
-              <strong>Or drop pictures here</strong>
+              <strong>O i-drop dito ang mga larawan</strong>
               <span>Transparent PNGs work best (up to 5 MB each).</span>
               <input
                 type="file"
@@ -804,7 +804,7 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
             {assetsLoading ? (
               <p className="se-empty">Loading pictures…</p>
             ) : assets.length === 0 ? (
-              <p className="se-empty">No pictures yet. Upload your first character above.</p>
+              <p className="se-empty">Wala pang larawan. Mag-upload muna ng tauhan sa itaas.</p>
             ) : (
               <div className="se-assets">
                 {assets.map((a) => (
@@ -858,7 +858,7 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
                 setSelectedId(null);
               }}
             >
-              {preview ? 'Back to editing' : 'Preview scene'}
+              {preview ? 'Bumalik sa pag-edit' : 'Silipin ang eksena'}
             </button>
           </div>
 
@@ -988,7 +988,7 @@ export default function SceneEditor({ storyId, scene, onClose, notify = () => {}
                   Keep proportions when resizing
                 </label>
 
-                <div className="se-sub">Actions</div>
+                <div className="se-sub">Mga aksyon</div>
                 <label className="se-num" style={{ marginTop: 10 }}>Intro animation
                   <select className="ed-input" value={selected.intro} onChange={(e) => patchObject(selectedId, { intro: e.target.value })}>
                     <option value="none">None</option><option value="fade">Fade In</option>
