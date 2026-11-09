@@ -30,8 +30,8 @@ export default function Signup() {
       errors.email = 'Maglagay ng wastong email address.';
 
     const username = form.username.trim();
-    if (username.length < 3) errors.username = 'Pangalan ng gumagamit must be at least 3 characters.';
-    else if (username.length > 30) errors.username = 'Pangalan ng gumagamit must be 30 characters or fewer.';
+    if (username.length < 3) errors.username = 'Dapat may hindi bababa sa 3 character ang pangalan ng gumagamit.';
+    else if (username.length > 30) errors.username = 'Hindi dapat lumampas sa 30 character ang pangalan ng gumagamit.';
     else if (!USERNAME_PATTERN.test(username))
       errors.username = 'Gumamit lamang ng mga letra, numero, tuldok, gitling at salungguhit.';
 

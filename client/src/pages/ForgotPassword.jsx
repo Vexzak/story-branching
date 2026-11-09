@@ -4,7 +4,7 @@ import { apiFetch } from '../api';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
-  const [username, setPangalan ng gumagamit] = useState('');
+  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const hasSavedRequest = Boolean(
@@ -40,7 +40,7 @@ export default function ForgotPassword() {
         <form onSubmit={handleSubmit} className="form">
           <label className="field">
             <span>Pangalan ng gumagamit</span>
-            <input required autoComplete="username" value={username} onChange={(event) => setPangalan ng gumagamit(event.target.value)} />
+            <input required autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} />
           </label>
           <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
             {busy ? 'Sending request…' : 'Humiling na magpalit ng password'}
