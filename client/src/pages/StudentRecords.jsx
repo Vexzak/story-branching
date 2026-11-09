@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '../api';
 
 const BASE = '/admin/records';
@@ -124,11 +124,89 @@ export default function StudentRecords() {
   }
 
   return (
-    <StudentList
-      listState={listState}
-      setListState={setListState}
-      onOpen={(studentId) => setView({ type: 'student', studentId })}
-    />
+    <div className="stack">
+      <PasswordResetRequests />
+      <StudentList
+        listState={listState}
+        setListState={setListState}
+        onOpen={(studentId) => setView({ type: 'student', studentId })}
+      />
+    </div>
+  );
+}
+
+function PasswordResetRequests() {
+  const [requests, setRequests] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [reviewing, setReviewing] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      const result = await apiFetch('/admin/password-resets');
+      setRequests(result.requests || []);
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Could not load password reset requests.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+    const timer = window.setInterval(load, 15000);
+    return () => window.clearInterval(timer);
+  }, [load]);
+
+  async function review(id, decision) {
+    setReviewing(id);
+    setError('');
+    try {
+      await apiFetch(`/admin/password-resets/${id}/review`, {
+        method: 'POST',
+        body: { decision },
+      });
+      await load();
+      window.dispatchEvent(new Event('password-reset-requests-updated'));
+    } catch (err) {
+      setError(err.message || 'Could not review this request.');
+    } finally {
+      setReviewing('');
+    }
+  }
+
+  return (
+    <section className="panel stack">
+      <div className="page-heading">
+        <div>
+          <h2>Password reset requests</h2>
+          <p className="muted">Approve or reject student requests. Approved students receive a reset link at their registered email.</p>
+        </div>
+      </div>
+      {error && <div className="alert alert-error">{error}</div>}
+      {loading ? <p className="muted">Loading requests…</p> : requests.length === 0 ? (
+        <p className="muted">No requests are awaiting review.</p>
+      ) : (
+        <div className="table-wrap">
+          <table className="table">
+            <thead><tr><th>Student</th><th>Requested</th><th>Actions</th></tr></thead>
+            <tbody>{requests.map((request) => (
+              <tr key={request.id}>
+                <td>{request.student?.display_name || request.student?.username || 'Student'} <span className="muted">({request.student?.username})</span></td>
+                <td>{new Date(request.requested_at).toLocaleString()}</td>
+                <td className="table-actions">
+                  <button type="button" className="btn btn-primary" disabled={Boolean(reviewing)} onClick={() => review(request.id, 'approved')}>
+                    {reviewing === request.id ? 'Saving…' : 'Approve'}
+                  </button>
+                  <button type="button" className="btn" disabled={Boolean(reviewing)} onClick={() => review(request.id, 'rejected')}>Reject</button>
+                </td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

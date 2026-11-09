@@ -3,12 +3,78 @@ import { supabaseAdmin } from '../supabase.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { env } from '../env.js';
 import { HttpError } from '../middleware/error.js';
+import { buildStoryAnalytics } from '../lib/storyAnalytics.js';
 
 const router = Router();
 
 // Every admin route requires a valid session AND the admin role, enforced here
 // on the server - never only by hiding buttons in React.
 router.use(requireAuth, requireAdmin);
+
+async function fetchAllRows(table, columns, configure = (query) => query) {
+  const rows = [];
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await configure(
+      supabaseAdmin.from(table).select(columns).order('id', { ascending: true })
+    ).range(from, from + pageSize - 1);
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if (!data || data.length < pageSize) return rows;
+  }
+}
+
+/** GET /api/admin/analytics - story, scene, and attempt summaries for teachers. */
+router.get('/analytics', async (_req, res, next) => {
+  try {
+    const [storyResult, studentResult] = await Promise.all([
+      supabaseAdmin
+        .from('stories')
+        .select('id, title, cover_image_path, sequence_order, published_version_id')
+        .eq('status', 'published')
+        .order('sequence_order', { ascending: true })
+        .order('created_at', { ascending: true }),
+      supabaseAdmin.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'student'),
+    ]);
+    if (storyResult.error) throw storyResult.error;
+    if (studentResult.error) throw studentResult.error;
+
+    const stories = storyResult.data ?? [];
+    const storyIds = stories.map((story) => story.id);
+    if (!storyIds.length) {
+      return res.json(buildStoryAnalytics({ stories: [], sessions: [], choiceLogs: [], versions: [], totalStudents: studentResult.count ?? 0 }));
+    }
+
+    const [sessions, choiceLogs, versions] = await Promise.all([
+      fetchAllRows(
+        'game_sessions',
+        'id, story_id, student_id, story_version_id, status, current_scene_id, started_at, completed_at',
+        (query) => query.in('story_id', storyIds)
+      ),
+      fetchAllRows(
+        'choice_logs',
+        'id, game_session_id, student_id, story_id, scene_id, choice_text_snapshot, scene_title_snapshot, is_correct, attempt_number, selected_at, resulting_scene_id',
+        (query) => query.in('story_id', storyIds)
+      ),
+      fetchAllRows(
+        'story_versions',
+        'id, story_id, version_number, content',
+        (query) => query.in('story_id', storyIds)
+      ),
+    ]);
+
+    res.set('Cache-Control', 'no-store');
+    res.json(buildStoryAnalytics({
+      stories,
+      sessions,
+      choiceLogs,
+      versions,
+      totalStudents: studentResult.count ?? 0,
+    }));
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/password-resets', async (_req, res, next) => {
   try {

@@ -121,7 +121,7 @@ async function downloadStoryAssets(onProgress) {
 function LoadingScreen({ progress, error, onRetry }) {
   const percent = progress.total ? Math.round((progress.complete / progress.total) * 100) : 0;
   return (
-    <main className="asset-welcome" aria-live="polite">
+    <main className="asset-welcome kids-theme" aria-live="polite">
       <section className="asset-card">
         <div className="asset-brand-mark" aria-hidden="true">✦</div>
         <p className="asset-brand">ISIP-SANGAY</p>

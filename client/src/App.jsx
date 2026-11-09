@@ -163,7 +163,41 @@ function AppShell({ children }) {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [pendingPasswordResets, setPendingPasswordResets] = useState(0);
   const showTopbar = profile?.role === 'admin' || location.pathname === '/home';
+
+  useEffect(() => {
+    if (profile?.role !== 'admin') {
+      setPendingPasswordResets(0);
+      return undefined;
+    }
+
+    let active = true;
+    let inFlight = false;
+    const refresh = async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const result = await apiFetch('/admin/password-resets');
+        if (active) setPendingPasswordResets(result.requests?.length || 0);
+      } catch (err) {
+        console.warn('Could not refresh pending password reset count:', err.message);
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    refresh();
+    const timer = window.setInterval(refresh, 15000);
+    window.addEventListener('focus', refresh);
+    window.addEventListener('password-reset-requests-updated', refresh);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('password-reset-requests-updated', refresh);
+    };
+  }, [profile?.role]);
 
   async function handleSignOut() {
     await signOut();
@@ -180,7 +214,15 @@ function AppShell({ children }) {
           {profile?.role === 'admin' ? (
             <>
               <Link to="/admin">Dashboard</Link>
-              <Link to="/admin/students">Students</Link>
+              <Link
+                to="/admin/students"
+                className="nav-students-link"
+                title={pendingPasswordResets ? `${pendingPasswordResets} pending password reset request${pendingPasswordResets === 1 ? '' : 's'}` : undefined}
+                aria-label={pendingPasswordResets ? `Students, ${pendingPasswordResets} pending password reset request${pendingPasswordResets === 1 ? '' : 's'}` : 'Students'}
+              >
+                Students
+                {pendingPasswordResets > 0 && <span className="nav-notification-dot" aria-hidden="true" />}
+              </Link>
               <Link to="/admin/stories">Stories</Link>
               {profile?.can_manage_admins && <Link to="/admin/accounts">Admin accounts</Link>}
             </>

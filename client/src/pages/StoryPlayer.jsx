@@ -372,14 +372,8 @@ export default function StoryPlayer() {
   const closeBook = () => setBookOpen(false);
 
   if (loading) {
-    const loadingScene = entry?.savedGame?.scene ?? entry?.firstScene;
-    const loadingBg = loadingScene?.background_image_path;
-    const loadingObjects = objectsOf(loadingScene);
     return (
-      <div className="vn-stage vn-loading-stage" style={loadingBg && !loadingObjects.length ? { backgroundImage: `url("${loadingBg}")` } : undefined}>
-        <style>{ART_CSS}</style>
-        {loadingObjects.length > 0 && <SceneArt key={`loading-${loadingScene?.id}`} bg={loadingBg} objects={loadingObjects} />}
-        <div className="vn-entry-shade" aria-hidden="true" />
+      <div className="vn-stage vn-loading-stage">
         <div className="vn-loading-indicator" role="status" aria-live="polite">
           <span className="vn-loading-spinner" aria-hidden="true" />
           <span>Naglo-load…</span>
@@ -426,7 +420,7 @@ export default function StoryPlayer() {
             <div className="vn-book-tutorial" role="dialog" aria-label="Gabay sa aklat">
               <div className="vn-book-tutorial-card">
                 <strong>Basahin ang buong istorya</strong>
-                <button type="button" className="vn-choice" onClick={() => setTutorialVisible(false)}>Sige</button>
+                <button type="button" className="vn-choice" onClick={() => { setTutorialVisible(false); start(false); }}>Laktawan</button>
               </div>
               <span className="vn-book-tutorial-arrow" aria-hidden="true">&#8599;</span>
             </div>

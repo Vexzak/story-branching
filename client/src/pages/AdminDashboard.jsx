@@ -1,14 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../api';
+import StoryAnalyticsDashboard from '../components/admin/StoryAnalyticsDashboard';
 
-function StatCard({ label, value, hint, tone }) {
+function RecentActivity({ sessions }) {
   return (
-    <div className={`stat-card ${tone ? `stat-${tone}` : ''}`}>
-      <span className="stat-value">{value}</span>
-      <span className="stat-label">{label}</span>
-      {hint && <span className="stat-hint">{hint}</span>}
-    </div>
+    <section className="analytics-panel analytics-recent-panel">
+      <div className="analytics-panel-heading">
+        <div><h2>Recent activity</h2><p>The latest student story sessions.</p></div>
+        <Link to="/admin/students">View students</Link>
+      </div>
+      {sessions.length === 0 ? <p className="analytics-empty-chart">No story sessions yet.</p> : (
+        <div className="table-wrap">
+          <table className="table">
+            <thead><tr><th>Student</th><th>Story</th><th>Status</th><th>Last activity</th></tr></thead>
+            <tbody>{sessions.map((session) => (
+              <tr key={session.id}>
+                <td>{session.profiles?.display_name || session.profiles?.username || 'Student'}</td>
+                <td>{session.stories?.title || '—'}</td>
+                <td><span className={`badge badge-${session.status}`}>{session.status.replace('_', ' ')}</span></td>
+                <td>{session.last_activity_at ? new Date(session.last_activity_at).toLocaleString() : '—'}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -16,159 +33,41 @@ export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [resetRequests, setResetRequests] = useState([]);
-  const [reviewing, setReviewing] = useState('');
-  const [reviewError, setReviewError] = useState('');
 
-  async function loadResetRequests() {
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
     try {
-      const result = await apiFetch('/admin/password-resets');
-      setResetRequests(result.requests || []);
+      const [dashboard, analytics] = await Promise.all([
+        apiFetch('/admin/dashboard'),
+        apiFetch('/admin/analytics'),
+      ]);
+      setData({ dashboard, analytics });
     } catch (err) {
-      setReviewError(err.message || 'Could not load password reset requests.');
-    }
-  }
-
-  async function reviewRequest(id, decision) {
-    setReviewing(id);
-    setReviewError('');
-    try {
-      await apiFetch(`/admin/password-resets/${id}/review`, { method: 'POST', body: { decision } });
-      await loadResetRequests();
-      const result = await apiFetch('/admin/dashboard');
-      setData(result);
-    } catch (err) {
-      setReviewError(err.message || 'Could not review this request.');
+      setError(err.message || 'Could not load the dashboard analytics.');
     } finally {
-      setReviewing('');
+      setLoading(false);
     }
-  }
-
-  useEffect(() => {
-    let active = true;
-
-    (async () => {
-      try {
-        const result = await apiFetch('/admin/dashboard');
-        if (active) setData(result);
-      } catch (err) {
-        if (active) setError(err.message || 'Could not load the dashboard.');
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-
-    loadResetRequests();
-    const refreshTimer = window.setInterval(loadResetRequests, 30000);
-
-    return () => {
-      active = false;
-      window.clearInterval(refreshTimer);
-    };
   }, []);
 
-  if (loading) return <p>Loading dashboard…</p>;
-  if (error) return <div className="alert alert-error">{error}</div>;
+  useEffect(() => { load(); }, [load]);
 
-  const { stats, recentActivity } = data;
+  if (loading && !data) {
+    return <div className="analytics-loading"><span className="analytics-loading-spinner" /><p>Gathering story progress…</p></div>;
+  }
+  if (error && !data) {
+    return <div className="analytics-error"><h1>Could not load analytics</h1><p>{error}</p><button type="button" className="btn btn-primary" onClick={load}>Try again</button></div>;
+  }
 
   return (
-    <div className="stack">
-      <div className="page-heading">
-        <div>
-          <h1>Admin dashboard</h1>
-          <p className="muted">Live statistics from the database.</p>
-        </div>
+    <div className="stack admin-analytics-page">
+      <div className="analytics-page-heading">
+        <div><p className="analytics-eyebrow">Teacher overview</p><h1>Story analytics</h1><p>See how students are progressing through your published stories.</p></div>
+        <Link className="btn btn-primary" to="/admin/stories">Manage stories</Link>
       </div>
-
-      {stats.pendingPasswordResets > 0 && (
-        <div className="alert alert-warn">
-          {stats.pendingPasswordResets} password reset request
-          {stats.pendingPasswordResets === 1 ? '' : 's'} awaiting review.
-        </div>
-      )}
-
-      <section className="panel stack">
-        <div className="page-heading"><div><h2>Password reset requests</h2><p className="muted">Review student requests. Approved students receive a reset link at their registered email.</p></div></div>
-        {reviewError && <div className="alert alert-error">{reviewError}</div>}
-        {resetRequests.length === 0 ? <p className="muted">No requests are awaiting review.</p> : (
-          <div className="table-wrap"><table className="table">
-            <thead><tr><th>Student</th><th>Requested</th><th>Actions</th></tr></thead>
-            <tbody>{resetRequests.map((request) => <tr key={request.id}>
-              <td>{request.student?.display_name || request.student?.username || 'Student'} <span className="muted">({request.student?.username})</span></td>
-              <td>{new Date(request.requested_at).toLocaleString()}</td>
-              <td className="table-actions">
-                <button type="button" className="btn btn-primary" disabled={Boolean(reviewing)} onClick={() => reviewRequest(request.id, 'approved')}>{reviewing === request.id ? 'Saving…' : 'Approve'}</button>
-                <button type="button" className="btn" disabled={Boolean(reviewing)} onClick={() => reviewRequest(request.id, 'rejected')}>Reject</button>
-              </td>
-            </tr>)}</tbody>
-          </table></div>
-        )}
-      </section>
-
-      <div className="stat-grid">
-        <StatCard label="Registered students" value={stats.totalStudents} />
-        <StatCard
-          label="Stories"
-          value={stats.totalStories}
-          hint={`${stats.publishedStories} published`}
-        />
-        <StatCard label="Game sessions" value={stats.totalSessions} />
-        <StatCard label="Completed sessions" value={stats.completedSessions} />
-        <StatCard label="Completion rate" value={`${stats.completionRate}%`} />
-        <StatCard
-          label="Password reset requests"
-          value={stats.pendingPasswordResets}
-          hint="pending"
-          tone={stats.pendingPasswordResets > 0 ? 'warn' : undefined}
-        />
-        <StatCard label="Choice selections logged" value={stats.totalChoiceSelections} />
-        <StatCard label="In progress" value={stats.inProgressSessions} />
-      </div>
-
-      <div className="page-heading">
-        <h2>Recent activity</h2>
-      </div>
-
-      {recentActivity.length === 0 ? (
-        <div className="panel">
-          <p className="muted">No game sessions yet.</p>
-        </div>
-      ) : (
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Student</th>
-                <th>Story</th>
-                <th>Status</th>
-                <th>Last activity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentActivity.map((session) => (
-                <tr key={session.id}>
-                  <td>{session.profiles?.username || '—'}</td>
-                  <td>{session.stories?.title || '—'}</td>
-                  <td>
-                    <span className={`badge badge-${session.status}`}>{session.status}</span>
-                  </td>
-                  <td>{new Date(session.last_activity_at).toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div className="quick-links">
-        <Link className="btn" to="/admin/students">
-          Manage students
-        </Link>
-        <Link className="btn" to="/admin/stories">
-          Configure stories
-        </Link>
-      </div>
+      {error && <div className="alert alert-error">{error} <button type="button" className="analytics-retry-link" onClick={load}>Refresh analytics</button></div>}
+      <StoryAnalyticsDashboard analytics={data.analytics} />
+      <RecentActivity sessions={data.dashboard.recentActivity || []} />
     </div>
   );
 }
