@@ -7,6 +7,10 @@ export default function ForgotPassword() {
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const hasSavedRequest = Boolean(
+    localStorage.getItem('passwordRecoveryTrackingKey') ||
+    localStorage.getItem('passwordRecoveryFinalStatus')
+  );
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -42,7 +46,10 @@ export default function ForgotPassword() {
             {busy ? 'Sending request…' : 'Request password reset'}
           </button>
         </form>
-        <div className="auth-links"><Link to="/login">← Back to login</Link></div>
+        <div className="auth-links">
+          <Link to="/login">← Back to login</Link>
+          {hasSavedRequest && <Link to="/recovery-status">Check request status</Link>}
+        </div>
       </div>
     </div>
   );

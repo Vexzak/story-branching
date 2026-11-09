@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import { apiFetch } from '../api';
 import { useAuth } from '../App';
+
+const recoveryNotices = {
+  pending: { tone: 'alert-warn', text: 'Your password reset request is waiting for an administrator to review it.' },
+  approved: { tone: 'alert-success', text: 'Your password reset request was approved. Check your registered email for the reset link.' },
+  rejected: { tone: 'alert-error', text: 'Your password reset request was rejected. Please ask your teacher or administrator for help.' },
+  completed: { tone: 'alert-success', text: 'Your password was changed successfully. You can log in with your new password.' },
+  expired: { tone: 'alert-warn', text: 'Your password reset request expired. Please submit a new request.' },
+};
 
 export default function Login() {
   const navigate = useNavigate();
@@ -12,6 +21,43 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [recoveryNotice, setRecoveryNotice] = useState(() => {
+    const status = localStorage.getItem('passwordRecoveryFinalStatus');
+    return recoveryNotices[status] || null;
+  });
+
+  // Show recovery decisions when the student returns to login, even if they
+  // navigated away from the dedicated recovery-status page.
+  useEffect(() => {
+    let active = true;
+    let timer;
+    const refreshRecoveryStatus = async () => {
+      const finalStatus = localStorage.getItem('passwordRecoveryFinalStatus');
+      if (finalStatus && recoveryNotices[finalStatus]) {
+        if (active) setRecoveryNotice(recoveryNotices[finalStatus]);
+        return;
+      }
+
+      const trackingKey = localStorage.getItem('passwordRecoveryTrackingKey');
+      if (trackingKey) {
+        try {
+          const result = await apiFetch(`/auth/password-recovery/${trackingKey}`);
+          const status = result.request?.status;
+          if (active && recoveryNotices[status]) setRecoveryNotice(recoveryNotices[status]);
+          if (['rejected', 'completed', 'expired'].includes(status)) {
+            localStorage.setItem('passwordRecoveryFinalStatus', status);
+            localStorage.removeItem('passwordRecoveryTrackingKey');
+          }
+        } catch (statusError) {
+          console.warn('Could not check password recovery status:', statusError.message);
+        }
+      }
+      if (active) timer = window.setTimeout(refreshRecoveryStatus, 15000);
+    };
+
+    refreshRecoveryStatus();
+    return () => { active = false; window.clearTimeout(timer); };
+  }, []);
 
   // Route the user once both the session and profile are available.
   useEffect(() => {
@@ -47,6 +93,7 @@ export default function Login() {
         <h1 className="auth-title">📖 Story Adventures</h1>
         <p className="auth-subtitle">Sign in to continue your stories.</p>
 
+        {recoveryNotice && <div className={`alert ${recoveryNotice.tone}`} role="status" aria-live="polite">{recoveryNotice.text} <Link to="/recovery-status">View request</Link></div>}
         {error && <div className="alert alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="form">
