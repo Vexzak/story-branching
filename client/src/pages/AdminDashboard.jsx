@@ -95,7 +95,7 @@ export default function AdminDashboard() {
           <div className="table-wrap"><table className="table">
             <thead><tr><th>Student</th><th>Requested</th><th>Actions</th></tr></thead>
             <tbody>{resetRequests.map((request) => <tr key={request.id}>
-              <td>{request.profiles?.display_name || request.profiles?.username || 'Student'} <span className="muted">({request.profiles?.username})</span></td>
+              <td>{request.student?.display_name || request.student?.username || 'Student'} <span className="muted">({request.student?.username})</span></td>
               <td>{new Date(request.requested_at).toLocaleString()}</td>
               <td className="table-actions">
                 <button type="button" className="btn btn-primary" disabled={Boolean(reviewing)} onClick={() => reviewRequest(request.id, 'approved')}>{reviewing === request.id ? 'Saving…' : 'Approve'}</button>

@@ -14,7 +14,7 @@ router.get('/password-resets', async (_req, res, next) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('password_reset_requests')
-      .select('id, status, requested_at, profiles(username, display_name)')
+      .select('id, status, requested_at, student:profiles!password_reset_requests_student_id_fkey(username, display_name)')
       .eq('status', 'pending')
       .order('requested_at', { ascending: true });
     if (error) throw error;

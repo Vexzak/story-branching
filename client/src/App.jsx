@@ -49,6 +49,17 @@ function AuthProvider({ children }) {
     } catch (err) {
       console.error('Failed to load profile:', err.message);
       setProfile(null);
+      if (err.status === 401) {
+        setProfileError('Your login session expired. Please sign in again.');
+        // Defer sign-out until after auth-state callbacks finish. Keeping an
+        // invalid token in storage makes every page refresh repeat this error.
+        window.setTimeout(() => {
+          supabase.auth.signOut({ scope: 'local' }).catch((signOutError) => {
+            console.warn('Could not clear the expired session:', signOutError.message);
+          });
+        }, 0);
+        return null;
+      }
       setProfileError(err.message || 'Could not load your account profile.');
       return null;
     }
