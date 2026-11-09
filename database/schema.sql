@@ -213,7 +213,7 @@ create index if not exists choice_logs_scene_idx
   on public.choice_logs (game_session_id, scene_id);
 
 -- ----------------------------------------------------------------------------
--- password_reset_requests (workflow implemented in Phase 5)
+-- password_reset_requests
 -- ----------------------------------------------------------------------------
 create table if not exists public.password_reset_requests (
   id           uuid primary key default gen_random_uuid(),
@@ -225,7 +225,8 @@ create table if not exists public.password_reset_requests (
   reviewed_by  uuid references public.profiles(id) on delete set null,
   approved_at  timestamptz,
   completed_at timestamptz,
-  expires_at   timestamptz
+  expires_at   timestamptz,
+  tracking_key_hash text unique
 );
 
 create index if not exists password_reset_requests_status_idx

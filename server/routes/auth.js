@@ -1,10 +1,105 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
+import { createHash, randomBytes } from 'node:crypto';
 import { supabaseAdmin } from '../supabase.js';
 import { HttpError } from '../middleware/error.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
+
+const recoveryLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many recovery attempts. Please try again later.' },
+});
+const recoveryStatusLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const hashRecoveryKey = (key) => createHash('sha256').update(key).digest('hex');
+
+// Start recovery using the student's username. A tracking key lets this browser
+// check the decision; the actual reset link is sent to the registered email.
+router.post('/password-recovery', recoveryLimiter, async (req, res, next) => {
+  try {
+    const parsed = z.object({
+      username: z.string().trim().min(3).max(30).regex(/^[A-Za-z0-9_.-]+$/),
+    }).safeParse(req.body);
+    if (!parsed.success) throw new HttpError(400, 'Enter your account username.');
+
+    const trackingKey = randomBytes(32).toString('hex');
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('id, role')
+      .ilike('username', parsed.data.username.replace(/[\\%_]/g, '\\$&'))
+      .maybeSingle();
+    if (profileError) throw profileError;
+
+    if (profile?.role === 'student') {
+      const { error } = await supabaseAdmin.from('password_reset_requests').insert({
+        student_id: profile.id,
+        tracking_key_hash: hashRecoveryKey(trackingKey),
+      });
+      if (error?.code === '23505') {
+        const { error: refreshError } = await supabaseAdmin
+          .from('password_reset_requests')
+          .update({ tracking_key_hash: hashRecoveryKey(trackingKey), requested_at: new Date().toISOString() })
+          .eq('student_id', profile.id)
+          .eq('status', 'pending');
+        if (refreshError) throw refreshError;
+      } else if (error) throw error;
+    }
+
+    // Same response shape for unknown users and duplicate requests.
+    res.status(202).json({ trackingKey, message: 'If this username belongs to a student account, the request has been sent to an administrator.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/password-recovery/:trackingKey', recoveryStatusLimiter, async (req, res, next) => {
+  try {
+    const key = String(req.params.trackingKey || '');
+    if (!/^[a-f0-9]{64}$/.test(key)) throw new HttpError(404, 'Recovery request not found.');
+    const { data, error } = await supabaseAdmin
+      .from('password_reset_requests')
+      .select('status, requested_at, reviewed_at, expires_at')
+      .eq('tracking_key_hash', hashRecoveryKey(key))
+      .maybeSingle();
+    if (error) throw error;
+    // Unknown usernames get an indistinguishable waiting state, avoiding an
+    // account-existence oracle through the status endpoint.
+    res.json({ request: data || { status: 'pending' } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/password-recovery/complete', requireAuth, async (req, res, next) => {
+  try {
+    const key = String(req.body?.trackingKey || '');
+    if (!/^[a-f0-9]{64}$/.test(key)) throw new HttpError(400, 'Invalid recovery request.');
+    const { data, error } = await supabaseAdmin
+      .from('password_reset_requests')
+      .update({ status: 'completed', completed_at: new Date().toISOString() })
+      .eq('tracking_key_hash', hashRecoveryKey(key))
+      .eq('student_id', req.authUser.id)
+      .eq('status', 'approved')
+      .select('id')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new HttpError(404, 'Approved recovery request not found.');
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Slow down repeated registration / availability probing.
 const signupLimiter = rateLimit({

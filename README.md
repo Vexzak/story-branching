@@ -26,8 +26,8 @@ planned.
 - Real admin dashboard statistics from the database.
 - Published-story listing and detail endpoints used by the student home page.
 
-Not yet implemented (later phases): the gameplay engine, story editor, detailed
-student analytics, password-reset workflow, and character animation.
+The admin-approved password recovery workflow is implemented. Other planned
+features may still be in progress.
 
 ---
 
@@ -83,6 +83,10 @@ keeping the client and server separate keeps the setup simple.
    "Confirm email" so student accounts work immediately. The signup endpoint
    already creates users with a confirmed email, so this is only relevant if you
    change that behaviour.
+4. Configure **Authentication -> URL Configuration** so the Site URL and
+   Redirect URLs include the deployed client origin and `/reset-password`.
+   Password reset emails use this redirect. Configure Supabase email delivery
+   (custom SMTP for production) so approved requests can reach students.
 
 ---
 
@@ -93,6 +97,18 @@ All schema lives in `database/schema.sql`. To apply it:
 1. In Supabase, open **SQL Editor → New query**.
 2. Paste the entire contents of `database/schema.sql` and click **Run**.
 3. Open a new query, paste `database/seed.sql`, and click **Run**.
+
+If the database was set up before this recovery flow was added, run
+`database/migrations/20261109_password_reset_tracking.sql` in the SQL Editor.
+
+### Password recovery
+
+Students submit their username on the forgot-password page. Their request
+appears on the admin dashboard, where an administrator can approve or reject
+it. Rejected requests show the decision on the student's recovery-status page.
+Approved requests send a Supabase password-reset email to the email address
+already registered to that account. The email link opens the new-password page.
+The student can keep the recovery-status page open to see decision updates.
 
 `database/seed.sql` creates four placeholder stories, each with a start scene, a
 decision scene, one correct choice, failure scenes for the wrong choices, and an

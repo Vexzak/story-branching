@@ -451,6 +451,11 @@ code {
   border-bottom: none;
 }
 
+.table-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 /* Badges ------------------------------------------------------------------ */
 .badge {
   display: inline-block;

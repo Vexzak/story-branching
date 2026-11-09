@@ -1,12 +1,85 @@
 import { Router } from 'express';
 import { supabaseAdmin } from '../supabase.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import { env } from '../env.js';
+import { HttpError } from '../middleware/error.js';
 
 const router = Router();
 
 // Every admin route requires a valid session AND the admin role, enforced here
 // on the server - never only by hiding buttons in React.
 router.use(requireAuth, requireAdmin);
+
+router.get('/password-resets', async (_req, res, next) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('password_reset_requests')
+      .select('id, status, requested_at, profiles(username, display_name)')
+      .eq('status', 'pending')
+      .order('requested_at', { ascending: true });
+    if (error) throw error;
+    res.json({ requests: data ?? [] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/password-resets/:id/review', async (req, res, next) => {
+  try {
+    const decision = req.body?.decision;
+    if (!['approved', 'rejected'].includes(decision)) {
+      throw new HttpError(400, 'Choose approve or reject.');
+    }
+
+    const { data: request, error: requestError } = await supabaseAdmin
+      .from('password_reset_requests')
+      .select('id, student_id, status')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (requestError) throw requestError;
+    if (!request) throw new HttpError(404, 'Password reset request not found.');
+    if (request.status !== 'pending') throw new HttpError(409, 'This request has already been reviewed.');
+
+    if (decision === 'approved') {
+      const { data: authResult, error: userError } = await supabaseAdmin.auth.admin.getUserById(request.student_id);
+      if (userError) throw userError;
+      const email = authResult?.user?.email;
+      if (!email) throw new HttpError(400, 'This account has no registered email address.');
+
+      const { error: emailError } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
+        redirectTo: `${env.CLIENT_ORIGIN}/reset-password`,
+      });
+      if (emailError) throw emailError;
+    }
+
+    const reviewedAt = new Date().toISOString();
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from('password_reset_requests')
+      .update({
+        status: decision,
+        reviewed_at: reviewedAt,
+        reviewed_by: req.profile.id,
+        approved_at: decision === 'approved' ? reviewedAt : null,
+      })
+      .eq('id', request.id)
+      .eq('status', 'pending')
+      .select('id')
+      .maybeSingle();
+    if (updateError) throw updateError;
+    if (!updated) throw new HttpError(409, 'This request has already been reviewed.');
+
+    await supabaseAdmin.from('audit_logs').insert({
+      actor_id: req.profile.id,
+      action: `password_reset_${decision}`,
+      target_type: 'password_reset_request',
+      target_id: request.id,
+    });
+
+    res.json({ ok: true, status: decision });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /** GET /api/admin/dashboard - real database statistics, nothing fabricated. */
 router.get('/dashboard', async (req, res, next) => {
