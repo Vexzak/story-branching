@@ -53,10 +53,10 @@ export default function AdminDashboard() {
   useEffect(() => { load(); }, [load]);
 
   if (loading && !data) {
-    return <div className="analytics-loading"><span className="analytics-loading-spinner" /><p>Gathering story progress…</p></div>;
+    return <div className="admin-analytics-page analytics-loading"><span className="analytics-loading-spinner" /><p>Gathering story progress…</p></div>;
   }
   if (error && !data) {
-    return <div className="analytics-error"><h1>Could not load analytics</h1><p>{error}</p><button type="button" className="btn btn-primary" onClick={load}>Try again</button></div>;
+    return <div className="admin-analytics-page analytics-error"><h1>Could not load analytics</h1><p>{error}</p><button type="button" className="btn btn-primary" onClick={load}>Try again</button></div>;
   }
 
   return (

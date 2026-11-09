@@ -2414,3 +2414,149 @@ body:has(.kids-home) {
   .kids-theme .username-chip { min-height: 30px; max-width: 68px; overflow: hidden; padding: 0.1rem 0.3rem; border-width: 1px; font-size: 0.66rem; text-overflow: ellipsis; white-space: nowrap; }
   .kids-theme .topbar-nav .btn-ghost { min-width: 0; min-height: 32px; padding: 0.15rem 0.36rem; border-width: 2px; border-radius: 8px; font-size: 0.66rem; }
 }
+
+/* Professional admin analytics palette: neutral surfaces with blue accents only. */
+.admin-analytics-page {
+  --kids-ink: #0f172a;
+  --kids-parchment: #ffffff;
+  --kids-parchment-border: #dbe4f0;
+  --kids-sign-border: #1e40af;
+  --kids-wood: #2563eb;
+  --kids-teal: #60a5fa;
+  color: #0f172a;
+}
+.admin-analytics-page .analytics-page-heading h1,
+.admin-analytics-page .analytics-section-heading h2,
+.admin-analytics-page .analytics-panel-heading h2,
+.admin-analytics-page .analytics-panel-heading h3,
+.admin-analytics-page .analytics-story-title,
+.admin-analytics-page .analytics-story-facts b,
+.admin-analytics-page .analytics-tricky-scene b,
+.admin-analytics-page .analytics-summary-value { color: #0f172a; }
+.admin-analytics-page .analytics-page-heading p,
+.admin-analytics-page .analytics-section-heading p,
+.admin-analytics-page .analytics-panel-heading p,
+.admin-analytics-page .analytics-summary-label,
+.admin-analytics-page .analytics-summary-card small,
+.admin-analytics-page .analytics-progress-label,
+.admin-analytics-page .analytics-story-facts small,
+.admin-analytics-page .analytics-tricky-scene small,
+.admin-analytics-page .analytics-empty-chart,
+.admin-analytics-page .analytics-empty-state p { color: #64748b; }
+.admin-analytics-page .analytics-eyebrow { color: #1d4ed8 !important; }
+.admin-analytics-page .analytics-summary-card,
+.admin-analytics-page .analytics-panel,
+.admin-analytics-page .analytics-story-card,
+.admin-analytics-page .analytics-empty-state {
+  border-color: #dbe4f0;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(30, 64, 175, .07);
+}
+.admin-analytics-page .analytics-summary-card {
+  border-top: 4px solid var(--summary-accent, #2563eb);
+  border-radius: 14px;
+}
+.admin-analytics-page .analytics-panel { border-width: 1px; border-radius: 16px; }
+.admin-analytics-page .analytics-tooltip {
+  border-color: #bfdbfe;
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .14);
+}
+.admin-analytics-page .analytics-section-heading > span {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1e40af;
+}
+.admin-analytics-page .analytics-story-card {
+  border-left: 4px solid var(--story-accent);
+  border-radius: 14px;
+  color: #0f172a;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.admin-analytics-page .analytics-story-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(30, 64, 175, .13);
+}
+.admin-analytics-page .analytics-story-card:focus-visible { outline-color: #2563eb; }
+.admin-analytics-page .analytics-story-cover { background: #eff6ff; }
+.admin-analytics-page .analytics-story-cover-fallback {
+  background: linear-gradient(145deg, #dbeafe, #93c5fd);
+}
+.admin-analytics-page .analytics-progress-track {
+  border-color: #dbeafe;
+  background: #eff6ff;
+}
+.admin-analytics-page .analytics-progress-label b { color: #1e3a8a; }
+.admin-analytics-page .analytics-story-open { color: #1d4ed8; }
+.admin-analytics-page .analytics-empty-state { border-style: dashed; }
+.admin-analytics-page .analytics-empty-state h2,
+.admin-analytics-page .analytics-empty-state h3 { color: #1e3a8a; }
+.admin-analytics-page .analytics-loading,
+.admin-analytics-page .analytics-error { color: #475569; }
+.admin-analytics-page .analytics-error h1 { color: #0f172a; }
+.admin-analytics-page .analytics-loading-spinner {
+  border-color: #dbeafe;
+  border-top-color: #2563eb;
+}
+.admin-analytics-page .analytics-retry-link { color: #1d4ed8; }
+.admin-analytics-page .story-modal-overlay { background: rgba(15, 23, 42, .58); }
+.admin-analytics-page .story-modal {
+  border: 1px solid #bfdbfe;
+  border-radius: 18px;
+  background: #f8fbff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, .3);
+}
+.admin-analytics-page .story-modal-header {
+  border-bottom: 1px solid #dbeafe;
+  background: linear-gradient(110deg, #eff6ff, #fff);
+}
+.admin-analytics-page .story-modal-header h2 { color: #0f172a; }
+.admin-analytics-page .story-modal-eyebrow { color: #1d4ed8; }
+.admin-analytics-page .story-modal-close {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e3a8a;
+  box-shadow: none;
+}
+.admin-analytics-page .story-modal-close:hover { background: #dbeafe; }
+.admin-analytics-page .story-detail-tile {
+  border-color: #dbe4f0;
+  border-top: 3px solid var(--story-accent);
+  border-radius: 12px;
+  background: #fff;
+}
+.admin-analytics-page .story-detail-tile > span,
+.admin-analytics-page .story-detail-tile small,
+.admin-analytics-page .story-highlight small,
+.admin-analytics-page .story-scene-list p,
+.admin-analytics-page .wrong-answer-list small,
+.admin-analytics-page .wrong-answer-list li > b { color: #64748b; }
+.admin-analytics-page .story-detail-tile strong,
+.admin-analytics-page .story-scene-list strong,
+.admin-analytics-page .wrong-answer-list strong { color: #0f172a; }
+.admin-analytics-page .story-highlight {
+  border-color: #dbeafe;
+  border-left: 4px solid var(--story-accent);
+  border-radius: 12px;
+  background: #eff6ff;
+}
+.admin-analytics-page .story-highlight > span { color: #1d4ed8; }
+.admin-analytics-page .story-highlight strong { color: #1e3a8a; }
+.admin-analytics-page .story-scene-list li,
+.admin-analytics-page .wrong-answer-list li { border-color: #e2e8f0; }
+.admin-analytics-page .story-scene-number {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.admin-analytics-page .wrong-answer-rank { background: #dbeafe; color: #1e40af; }
+.admin-analytics-page .badge,
+.admin-analytics-page .badge-success,
+.admin-analytics-page .badge-completed,
+.admin-analytics-page .badge-in_progress,
+.admin-analytics-page .badge-locked,
+.admin-analytics-page .badge-abandoned {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e40af;
+}

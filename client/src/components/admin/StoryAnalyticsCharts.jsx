@@ -40,9 +40,9 @@ export function StoryOverviewCharts({ stories }) {
         {stories.some((story) => story.hasData) ? (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={stories} margin={{ top: 12, right: 12, left: -14, bottom: 18 }}>
-              <CartesianGrid stroke="#e8dfcc" strokeDasharray="4 4" vertical={false} />
-              <XAxis dataKey="title" tickFormatter={(value) => shortLabel(value, 16)} interval={0} angle={-12} textAnchor="end" height={52} tick={{ fill: '#654b32', fontSize: 12 }} />
-              <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fill: '#765a39', fontSize: 12 }} />
+              <CartesianGrid stroke="#dbe4f0" strokeDasharray="4 4" vertical={false} />
+              <XAxis dataKey="title" tickFormatter={(value) => shortLabel(value, 16)} interval={0} angle={-12} textAnchor="end" height={52} tick={{ fill: '#475569', fontSize: 12 }} />
+              <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fill: '#64748b', fontSize: 12 }} />
               <Tooltip content={<ChartTooltip mode="completion" />} />
               <Bar dataKey="successRate" name="Completion rate" radius={[8, 8, 0, 0]}>
                 {stories.map((story) => <Cell key={story.id} fill={story.color} />)}
@@ -59,9 +59,9 @@ export function StoryOverviewCharts({ stories }) {
         {hasAttempts ? (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={stories} margin={{ top: 12, right: 12, left: -14, bottom: 18 }}>
-              <CartesianGrid stroke="#e8dfcc" strokeDasharray="4 4" vertical={false} />
-              <XAxis dataKey="title" tickFormatter={(value) => shortLabel(value, 16)} interval={0} angle={-12} textAnchor="end" height={52} tick={{ fill: '#654b32', fontSize: 12 }} />
-              <YAxis allowDecimals tick={{ fill: '#765a39', fontSize: 12 }} />
+              <CartesianGrid stroke="#dbe4f0" strokeDasharray="4 4" vertical={false} />
+              <XAxis dataKey="title" tickFormatter={(value) => shortLabel(value, 16)} interval={0} angle={-12} textAnchor="end" height={52} tick={{ fill: '#475569', fontSize: 12 }} />
+              <YAxis allowDecimals tick={{ fill: '#64748b', fontSize: 12 }} />
               <Tooltip content={<ChartTooltip mode="difficulty" />} />
               <Bar dataKey="averageAttemptsPerScene" name="Average attempts" radius={[8, 8, 0, 0]}>
                 {stories.map((story) => <Cell key={story.id} fill={story.color} />)}
@@ -97,9 +97,9 @@ export function SceneReachChart({ scenes, color }) {
     <div className="analytics-scene-chart">
       <ResponsiveContainer width="100%" height={310}>
         <BarChart data={scenes} margin={{ top: 12, right: 12, left: -16, bottom: 52 }}>
-          <CartesianGrid stroke="#e8dfcc" strokeDasharray="4 4" vertical={false} />
-          <XAxis dataKey="title" tickFormatter={(value) => shortLabel(value, 12)} interval={0} angle={-24} textAnchor="end" height={68} tick={{ fill: '#654b32', fontSize: 11 }} />
-          <YAxis allowDecimals={false} tick={{ fill: '#765a39', fontSize: 12 }} />
+          <CartesianGrid stroke="#dbe4f0" strokeDasharray="4 4" vertical={false} />
+          <XAxis dataKey="title" tickFormatter={(value) => shortLabel(value, 12)} interval={0} angle={-24} textAnchor="end" height={68} tick={{ fill: '#475569', fontSize: 11 }} />
+          <YAxis allowDecimals={false} tick={{ fill: '#64748b', fontSize: 12 }} />
           <Tooltip content={<SceneTooltip mode="reach" />} />
           <Legend />
           <Bar dataKey="reachedStudents" name="Reached" fill={reachedColor} radius={[5, 5, 0, 0]} />
@@ -116,9 +116,9 @@ export function SceneAttemptsChart({ scenes, color }) {
     <div className="analytics-scene-chart">
       <ResponsiveContainer width="100%" height={310}>
         <BarChart data={scenes} margin={{ top: 12, right: 12, left: -16, bottom: 52 }}>
-          <CartesianGrid stroke="#e8dfcc" strokeDasharray="4 4" vertical={false} />
-          <XAxis dataKey="title" tickFormatter={(value) => shortLabel(value, 12)} interval={0} angle={-24} textAnchor="end" height={68} tick={{ fill: '#654b32', fontSize: 11 }} />
-          <YAxis allowDecimals={false} tick={{ fill: '#765a39', fontSize: 12 }} />
+          <CartesianGrid stroke="#dbe4f0" strokeDasharray="4 4" vertical={false} />
+          <XAxis dataKey="title" tickFormatter={(value) => shortLabel(value, 12)} interval={0} angle={-24} textAnchor="end" height={68} tick={{ fill: '#475569', fontSize: 11 }} />
+          <YAxis allowDecimals={false} tick={{ fill: '#64748b', fontSize: 12 }} />
           <Tooltip content={<SceneTooltip mode="attempts" />} />
           <Legend />
           <Bar dataKey="attempts.first" name="1st try" stackId="attempts" fill={shades[0]} />

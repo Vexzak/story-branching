@@ -2,7 +2,7 @@ import { useState } from 'react';
 import StoryDetailsModal from './StoryDetailsModal';
 import { StoryOverviewCharts } from './StoryAnalyticsCharts';
 
-const STORY_COLORS = ['#d17a18', '#2875c7', '#8050b5', '#158576', '#c44945', '#8b5228'];
+const STORY_COLORS = ['#1e3a8a', '#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
 
 function SummaryCard({ label, value, hint, accent }) {
   return (
@@ -57,11 +57,11 @@ export default function StoryAnalyticsDashboard({ analytics }) {
   return (
     <div className="story-analytics stack">
       <section className="analytics-summary-grid" aria-label="Overall story statistics">
-        <SummaryCard label="Total students" value={summary.totalStudents} hint="registered student accounts" accent="#2875c7" />
-        <SummaryCard label="Overall completion" value={`${summary.completionRate}%`} hint="started student-story pairs that finished" accent="#158576" />
-        <SummaryCard label="Avg. attempts per scene" value={summary.averageAttemptsPerScene ?? '—'} hint={summary.averageAttemptsPerScene === null ? 'No passes recorded yet' : 'among students who passed'} accent="#8050b5" />
-        <SummaryCard label="Easiest story" value={summary.easiestStory?.title || 'Not enough data'} hint={summary.easiestStory ? `${summary.easiestStory.averageAttemptsPerScene} attempts per passed scene` : 'Students need to pass scenes first'} accent={summary.easiestStory ? stories.find((s) => s.id === summary.easiestStory.id)?.color : '#d17a18'} />
-        <SummaryCard label="Hardest story" value={summary.hardestStory?.title || 'Not enough data'} hint={summary.hardestStory ? `${summary.hardestStory.averageAttemptsPerScene} attempts per passed scene` : 'Students need to pass scenes first'} accent={summary.hardestStory ? stories.find((s) => s.id === summary.hardestStory.id)?.color : '#c44945'} />
+        <SummaryCard label="Total students" value={summary.totalStudents} hint="registered student accounts" accent="#1e3a8a" />
+        <SummaryCard label="Overall completion" value={`${summary.completionRate}%`} hint="started student-story pairs that finished" accent="#1d4ed8" />
+        <SummaryCard label="Avg. attempts per scene" value={summary.averageAttemptsPerScene ?? '—'} hint={summary.averageAttemptsPerScene === null ? 'No passes recorded yet' : 'among students who passed'} accent="#2563eb" />
+        <SummaryCard label="Easiest story" value={summary.easiestStory?.title || 'Not enough data'} hint={summary.easiestStory ? `${summary.easiestStory.averageAttemptsPerScene} attempts per passed scene` : 'Students need to pass scenes first'} accent={summary.easiestStory ? stories.find((s) => s.id === summary.easiestStory.id)?.color : '#3b82f6'} />
+        <SummaryCard label="Hardest story" value={summary.hardestStory?.title || 'Not enough data'} hint={summary.hardestStory ? `${summary.hardestStory.averageAttemptsPerScene} attempts per passed scene` : 'Students need to pass scenes first'} accent={summary.hardestStory ? stories.find((s) => s.id === summary.hardestStory.id)?.color : '#60a5fa'} />
       </section>
 
       {stories.length === 0 ? <EmptyStories /> : <>
