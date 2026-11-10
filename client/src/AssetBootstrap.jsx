@@ -156,19 +156,32 @@ export default function AssetBootstrap() {
 
   useEffect(() => {
     if (!isInstalledApp()) return undefined;
+    let active = true;
+    let lockPending = false;
     const requestLock = () => {
-      if (screen.orientation?.type.startsWith('landscape')) return;
-      lockLandscape().catch((error) => {
+      if (!active || lockPending || screen.orientation?.type.startsWith('landscape')) return;
+      lockPending = true;
+      lockLandscape().then((locked) => {
+        if (locked) {
+          window.removeEventListener('pointerdown', requestLock, true);
+          window.removeEventListener('keydown', requestLock, true);
+        }
+      }).catch((error) => {
         console.info('Landscape orientation lock is unavailable on this device:', error.message);
-      });
+      }).finally(() => { lockPending = false; });
     };
 
     requestLock();
     window.addEventListener('pageshow', requestLock);
     document.addEventListener('visibilitychange', requestLock);
+    window.addEventListener('pointerdown', requestLock, true);
+    window.addEventListener('keydown', requestLock, true);
     return () => {
+      active = false;
       window.removeEventListener('pageshow', requestLock);
       document.removeEventListener('visibilitychange', requestLock);
+      window.removeEventListener('pointerdown', requestLock, true);
+      window.removeEventListener('keydown', requestLock, true);
     };
   }, []);
 
