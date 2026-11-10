@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import App from './App.jsx';
+import { isInstalledApp, lockLandscape } from './orientation';
 
 // This name is shared with the service worker's CacheFirst media route so
 // resources downloaded here are the same responses used by gameplay offline.
@@ -152,6 +153,24 @@ export default function AssetBootstrap() {
   const [progress, setProgress] = useState({ complete: 0, total: 0, status: 'Connecting to your story library…' });
   const [error, setError] = useState('');
   const syncInFlight = useRef(false);
+
+  useEffect(() => {
+    if (!isInstalledApp()) return undefined;
+    const requestLock = () => {
+      if (screen.orientation?.type.startsWith('landscape')) return;
+      lockLandscape().catch((error) => {
+        console.info('Landscape orientation lock is unavailable on this device:', error.message);
+      });
+    };
+
+    requestLock();
+    window.addEventListener('pageshow', requestLock);
+    document.addEventListener('visibilitychange', requestLock);
+    return () => {
+      window.removeEventListener('pageshow', requestLock);
+      document.removeEventListener('visibilitychange', requestLock);
+    };
+  }, []);
 
   const sync = useCallback(async ({ firstRun = false } = {}) => {
     // Focus/online events can fire together. Keep one inventory refresh active

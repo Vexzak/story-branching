@@ -291,17 +291,35 @@ const RPC_ERRORS = {
 router.post('/:sessionId/choices', async (req, res, next) => {
   try {
     const { sessionId } = req.params;
-    const { choiceId } = req.body ?? {};
+    const { choiceId, clientActionId, expectedSceneId } = req.body ?? {};
     assertUuid(sessionId, 'session id');
     assertUuid(choiceId, 'choice id');
 
-    const { data: result, error } = await supabaseAdmin.rpc('submit_choice', {
+    const rpcName = clientActionId ? 'submit_choice_idempotent' : 'submit_choice';
+    if (clientActionId) {
+      assertUuid(clientActionId, 'client action id');
+      assertUuid(expectedSceneId, 'expected scene id');
+    }
+
+    const rpcArgs = {
       p_session_id: sessionId,
       p_student_id: req.profile.id,
       p_choice_id: choiceId,
-    });
+    };
+    if (clientActionId) {
+      rpcArgs.p_action_id = clientActionId;
+      rpcArgs.p_expected_scene_id = expectedSceneId;
+    }
+
+    const { data: result, error } = await supabaseAdmin.rpc(rpcName, rpcArgs);
 
     if (error) {
+      if (error.message?.includes('OFFLINE_PROGRESS_CONFLICT')) {
+        throw new HttpError(409, 'Hindi naisabay ang offline progress dahil nagbago na ang kasalukuyang eksena sa server. Nananatiling naka-save ang offline progress sa device na ito.');
+      }
+      if (error.message?.includes('OFFLINE_ACTION_MISMATCH') || error.message?.includes('OFFLINE_ACTION_INCOMPLETE')) {
+        throw new HttpError(409, 'Hindi ligtas na maulit ang offline action. Nananatiling naka-save ang progress sa device na ito.');
+      }
       for (const [key, [status, message]] of Object.entries(RPC_ERRORS)) {
         if (error.message?.includes(key)) throw new HttpError(status, message);
       }

@@ -17,7 +17,10 @@ export async function apiFetch(path, options = {}) {
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const offlineCacheable = method === 'GET' && ['/me', '/stories', '/stories/offline-pack'].includes(path);
+  const offlineCacheable = method === 'GET' && (
+    ['/me', '/stories', '/stories/offline-pack'].includes(path) ||
+    /^\/sessions\/entry\/[0-9a-f-]+$/i.test(path)
+  );
   let cacheKey = null;
   if (offlineCacheable && 'caches' in window) {
     const userId = data?.session?.user?.id || 'signed-out';

@@ -100,6 +100,8 @@ All schema lives in `database/schema.sql`. To apply it:
 
 If the database was set up before this recovery flow was added, run
 `database/migrations/20261109_password_reset_tracking.sql` in the SQL Editor.
+For offline gameplay progress syncing, also run
+`database/migrations/20261111_offline_choice_sync.sql` in the SQL Editor.
 
 ### Password recovery
 
@@ -291,8 +293,12 @@ branching-story-pwa/
   implemented yet (Phases 2–5). Their routes exist and clearly say so.
 - Placeholder artwork only. Characters and backgrounds are simple placeholders
   until final assets are supplied.
-- Online-only gameplay. The service worker caches the application shell, not
-  gameplay data; the app does not claim offline play or background sync.
+- Published stories and their media can be downloaded for offline play.
+  Offline selections are saved on the device and synchronized when the app
+  reconnects while open or returns to the foreground. Apply
+  `database/migrations/20261111_offline_choice_sync.sql` before using this
+  feature. Offline progress remains on that device until it syncs; it is not
+  browser background sync.
 - No automated test suite yet.
 - Story versioning is implemented at the database level
   (`publish_story_version`); the admin publishing endpoint arrives in Phase 3.

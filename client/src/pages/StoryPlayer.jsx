@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { apiFetch } from '../api';
+import {
+  getStudentId,
+  loadOfflineProgress,
+  saveOfflineProgress,
+  syncOfflineProgress,
+} from '../offlineProgress';
+import { lockLandscape } from '../orientation';
 
 /*
  * Scenes with saved characters/objects are drawn inside a 16:9 frame that always
@@ -30,12 +37,24 @@ const ART_CSS = `
 const INTRO_ANIMATIONS = { fade: 'vn-fade', left: 'vn-left', right: 'vn-right', top: 'vn-top', bottom: 'vn-bottom', zoom: 'vn-zoom', bounce: 'vn-bounce' };
 
 function RotatePrompt() {
+  const [lockMessage, setLockMessage] = useState('');
+  const requestLandscape = async () => {
+    try {
+      const locked = await lockLandscape();
+      if (!locked) setLockMessage('Hindi sinusuportahan ng browser na ito ang awtomatikong pag-landscape. Itagilid ang telepono.');
+    } catch {
+      setLockMessage('Hindi ma-lock ng browser ang orientation. Itagilid ang telepono o tingnan ang auto-rotate setting.');
+    }
+  };
+
   return (
     <div className="vn-rotate-overlay" role="status" aria-live="polite">
       <div className="vn-rotate-card">
         <span className="vn-rotate-icon" aria-hidden="true">↻</span>
         <h2>Itagilid ang telepono para sa kuwento</h2>
-        <p>Itagilid ang telepono nang pahiga para mas lumawak ang tanawin ng kuwento.</p>
+        <p>Susubukan ng app na ilipat ang screen sa landscape. Kung hindi ito suportado, itagilid ang telepono nang pahiga.</p>
+        <button type="button" className="vn-rotate-button" onClick={requestLandscape}>Subukang i-landscape</button>
+        {lockMessage && <p className="vn-rotate-help">{lockMessage}</p>}
       </div>
     </div>
   );
@@ -76,18 +95,88 @@ function localScene(content, sceneId) {
   return sceneId && content?.scenes?.[sceneId] ? content.scenes[sceneId] : null;
 }
 
-function localGame(pack, storyId) {
+function localGame(pack, storyId, progress = null, fallbackSceneId = null) {
   const savedStory = pack?.stories?.find((story) => story.id === storyId);
   if (savedStory && savedStory.unlocked === false) return null;
   const content = savedStory?.content;
-  const scene = localScene(content, content?.starting_scene_id);
+  const scene = localScene(
+    content,
+    progress?.currentSceneId || fallbackSceneId || content?.starting_scene_id
+  );
   if (!savedStory || !scene) return null;
   return {
     offline: true,
     content,
-    session: { id: `offline-${storyId}`, story_id: storyId, current_scene_id: scene.id, status: 'in_progress' },
+    offlineProgress: progress,
+    session: {
+      id: progress?.serverSessionId || `offline-${storyId}`,
+      story_id: storyId,
+      current_scene_id: scene.id,
+      status: progress?.status || 'in_progress',
+    },
     story: content.story,
     scene,
+  };
+}
+
+function isNetworkError(error) {
+  return !navigator.onLine || error instanceof TypeError;
+}
+
+function makeOfflineProgress(userId, storyId, sceneId, serverSessionId = null, previous = null) {
+  return {
+    version: 1,
+    userId,
+    storyId,
+    baseSceneId: previous?.actions?.length ? previous.baseSceneId : sceneId,
+    currentSceneId: sceneId,
+    status: 'in_progress',
+    serverSessionId: serverSessionId || previous?.serverSessionId || null,
+    restart: previous?.restart === true,
+    actions: previous?.actions || [],
+  };
+}
+
+function advanceOfflineGame(game, actionId, choiceId) {
+  const choice = game.scene.choices?.find((item) => item.id === choiceId);
+  if (!choice) throw new Error('Hindi makita ang sagot na iyon sa naka-save na kuwento.');
+
+  const progress = {
+    ...game.offlineProgress,
+    actions: [...game.offlineProgress.actions, {
+      id: actionId,
+      choiceId,
+      sceneId: game.scene.id,
+    }],
+  };
+  const isCorrect = game.scene.scene_type !== 'decision' || !!choice.is_correct;
+  if (!isCorrect) {
+    return {
+      game: { ...game, offlineProgress: progress },
+      progress,
+      failure: {
+        scene: localScene(game.content, choice.failure_scene_id),
+        feedback: choice.feedback,
+      },
+      note: '',
+    };
+  }
+
+  const nextScene = localScene(game.content, choice.destination_scene_id);
+  if (!nextScene) throw new Error('Wala ang susunod na eksena sa naka-save na kuwento.');
+  const status = nextScene.scene_type === 'ending' ? 'completed' : 'in_progress';
+  progress.currentSceneId = nextScene.id;
+  progress.status = status;
+  return {
+    game: {
+      ...game,
+      scene: nextScene,
+      offlineProgress: progress,
+      session: { ...game.session, current_scene_id: nextScene.id, status },
+    },
+    progress,
+    failure: null,
+    note: choice.feedback || '',
   };
 }
 
@@ -175,8 +264,10 @@ export default function StoryPlayer() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [syncWarning, setSyncWarning] = useState('');
   const [showChoices, setShowChoices] = useState(false);
   const choiceOrders = useRef(new Map());
+  const syncingOfflineProgress = useRef(false);
   const audioRef = useRef(null);
   const [audioBlocked, setAudioBlocked] = useState(false);
 
@@ -207,19 +298,73 @@ export default function StoryPlayer() {
       setFailure(null);
       setNote('');
       try {
+        const userId = await getStudentId();
+        if (userId) {
+          const pending = await loadOfflineProgress(userId, storyId);
+          if (pending?.actions?.length || pending?.restart) {
+            const syncedGame = await syncOfflineProgress(userId, storyId);
+            if (!restart) {
+              setGame(orderChoices(syncedGame));
+              setSyncWarning('');
+              return;
+            }
+          }
+        }
         const response = await apiFetch('/sessions', {
           method: 'POST',
           body: { storyId, restart },
         });
         const data = orderChoices(response);
+        if (userId) {
+          try {
+            const previous = await loadOfflineProgress(userId, storyId);
+            if (previous?.actions?.length) {
+              throw new Error('Pending offline actions must sync before making a new server checkpoint.');
+            }
+            await saveOfflineProgress(makeOfflineProgress(
+              userId,
+              storyId,
+              data.session.current_scene_id,
+              data.session.id,
+              restart ? null : previous
+            ));
+          } catch (cacheError) {
+            console.warn('Could not save an offline story checkpoint:', cacheError.message);
+            setNote('Hindi mai-save ang offline progress sa device na ito.');
+          }
+        }
         setGame(data);
       } catch (err) {
         try {
           const savedPack = await apiFetch('/stories/offline-pack');
-          const savedGame = localGame(savedPack, storyId);
+          const userId = await getStudentId();
+          if (!userId) throw err;
+          let progress = await loadOfflineProgress(userId, storyId);
+          if (restart) {
+            if (progress?.actions?.length) {
+              throw new Error('May offline progress na hindi pa nasasabay. Ikonekta muna sa internet bago magsimula muli.');
+            }
+            const firstSceneId = entry?.firstScene?.id || savedPack?.stories
+              ?.find((story) => story.id === storyId)?.content?.starting_scene_id;
+            progress = firstSceneId
+              ? { ...makeOfflineProgress(userId, storyId, firstSceneId), restart: true }
+              : null;
+          } else if (!progress) {
+            const baseSceneId = entry?.savedGame?.session?.current_scene_id || entry?.firstScene?.id;
+            if (baseSceneId) {
+              progress = makeOfflineProgress(
+                userId,
+                storyId,
+                baseSceneId,
+                entry?.savedGame?.session?.id || null
+              );
+            }
+          }
+          const savedGame = localGame(savedPack, storyId, progress, entry?.firstScene?.id);
           if (!savedGame) throw new Error('Hindi na-save ang kuwentong ito para laruin offline sa device na ito.');
+          await saveOfflineProgress(progress);
           setGame(orderChoices(savedGame));
-          setNote('Offline copy · hindi masi-sync ang progreso until you are online.');
+          setNote('Offline na laro · naka-save sa device ang progress at awtomatikong susubukang i-sync kapag may internet.');
         } catch (offlineError) {
           setError(offlineError.message || err.message);
         }
@@ -227,7 +372,7 @@ export default function StoryPlayer() {
         setLoading(false);
       }
     },
-    [storyId, orderChoices]
+    [storyId, orderChoices, entry]
   );
 
   useEffect(() => {
@@ -236,11 +381,30 @@ export default function StoryPlayer() {
     setGame(null);
     setEntry(null);
     setError('');
+    setSyncWarning('');
     setBookOpen(false);
     setBookPage(0);
     (async () => {
       try {
-        const data = await apiFetch(`/sessions/entry/${storyId}`);
+        const userId = await getStudentId();
+        let progress = userId ? await loadOfflineProgress(userId, storyId) : null;
+        let progressSyncFailed = false;
+        if ((progress?.actions?.length || progress?.restart) && navigator.onLine) {
+          try {
+            await syncOfflineProgress(userId, storyId);
+            progress = await loadOfflineProgress(userId, storyId);
+            setSyncWarning('');
+          } catch (syncError) {
+            progressSyncFailed = true;
+            if (active) setSyncWarning(syncError.message || 'May offline progress na hindi pa nasasabay.');
+          }
+        }
+        let data = await apiFetch(`/sessions/entry/${storyId}`);
+        if (progress && (progress.actions?.length || !navigator.onLine || progressSyncFailed)) {
+          const pack = await apiFetch('/stories/offline-pack');
+          const savedGame = localGame(pack, storyId, progress);
+          if (savedGame) data = { ...data, savedGame };
+        }
         if (!active) return;
         setEntry(data);
         if (!data.tutorialSeen) {
@@ -259,11 +423,16 @@ export default function StoryPlayer() {
           const firstScene = localScene(content, content?.starting_scene_id);
           if (savedStory?.unlocked === false) throw new Error('Hindi pa bukas ang istoryang ito.');
           if (!savedStory || !firstScene) throw err;
+          const userId = await getStudentId();
+          const progress = userId ? await loadOfflineProgress(userId, storyId) : null;
+          const savedGame = progress?.currentSceneId
+            ? localGame(pack, storyId, progress, firstScene.id)
+            : null;
           if (active) {
             setEntry({
               story: content.story,
               firstScene,
-              savedGame: null,
+              savedGame,
               tutorialSeen: true,
               offline: true,
             });
@@ -278,6 +447,50 @@ export default function StoryPlayer() {
     })();
     return () => { active = false; };
   }, [storyId]);
+
+  useEffect(() => {
+    if (!game?.offline) return undefined;
+    let active = true;
+
+    const attemptSync = async () => {
+      if (!navigator.onLine || syncingOfflineProgress.current) return;
+      syncingOfflineProgress.current = true;
+      setBusy(true);
+      try {
+        const userId = await getStudentId();
+        if (!userId) throw new Error('Mag-log in muli para ma-sync ang offline progress.');
+        const syncedGame = await syncOfflineProgress(userId, storyId);
+        if (active && syncedGame) {
+          setGame(orderChoices(syncedGame));
+          setFailure(null);
+          setNote('Matagumpay na na-sync ang offline progress.');
+          setSyncWarning('');
+        }
+      } catch (syncError) {
+        if (active) {
+          const message = syncError.message || 'Hindi pa na-sync ang offline progress.';
+          setSyncWarning(message);
+          setNote(`Nananatiling naka-save sa device ang progress. ${message}`);
+        }
+      } finally {
+        syncingOfflineProgress.current = false;
+        if (active) setBusy(false);
+      }
+    };
+
+    const onConnectionChange = () => { attemptSync(); };
+    window.addEventListener('online', onConnectionChange);
+    window.addEventListener('focus', onConnectionChange);
+    document.addEventListener('visibilitychange', onConnectionChange);
+    if ((game.offlineProgress?.actions?.length || game.offlineProgress?.restart) && navigator.onLine) attemptSync();
+
+    return () => {
+      active = false;
+      window.removeEventListener('online', onConnectionChange);
+      window.removeEventListener('focus', onConnectionChange);
+      document.removeEventListener('visibilitychange', onConnectionChange);
+    };
+  }, [game?.offline, game?.offlineProgress?.actions?.length, storyId, orderChoices]);
 
   const activeSceneId = game?.scene?.id;
   const activeAudioUrl = game?.scene?.sound_effect_path;
@@ -316,37 +529,39 @@ export default function StoryPlayer() {
     if (busy || !game) return;
     setBusy(true);
     setError('');
+    const actionId = game.offline ? null : crypto.randomUUID();
     try {
       if (game.offline) {
-        const choice = game.scene.choices?.find((item) => item.id === choiceId);
-        if (!choice) throw new Error('Hindi makita ang sagot na iyon sa naka-save na kuwento.');
+        const action = advanceOfflineGame(game, crypto.randomUUID(), choiceId);
+        await saveOfflineProgress(action.progress);
         setShowChoices(false);
-        const isCorrect = game.scene.scene_type !== 'decision' || !!choice.is_correct;
-        if (!isCorrect) {
-          setFailure({ scene: localScene(game.content, choice.failure_scene_id), feedback: choice.feedback });
-          setNote('');
-        } else {
-          const nextScene = localScene(game.content, choice.destination_scene_id);
-          if (!nextScene) throw new Error('Wala ang susunod na eksena sa naka-save na kuwento.');
-          setFailure(null);
-          setNote(choice.feedback || '');
-          setGame({
-            ...game,
-            scene: nextScene,
-            session: {
-              ...game.session,
-              current_scene_id: nextScene.id,
-              status: nextScene.scene_type === 'ending' ? 'completed' : 'in_progress',
-            },
-          });
-        }
+        setGame(action.game);
+        setFailure(action.failure);
+        setNote(action.note);
         return;
       }
       const data = await apiFetch(`/sessions/${game.session.id}/choices`, {
         method: 'POST',
-        body: { choiceId },
+        body: { choiceId, clientActionId: actionId, expectedSceneId: game.scene.id },
       });
       const { result, ...next } = data;
+      const userId = await getStudentId();
+      if (userId) {
+        try {
+          const previous = await loadOfflineProgress(userId, storyId);
+          if (!previous?.actions?.length) {
+            await saveOfflineProgress(makeOfflineProgress(
+              userId,
+              storyId,
+              next.session.current_scene_id,
+              next.session.id
+            ));
+          }
+        } catch (cacheError) {
+          console.warn('Could not save an offline story checkpoint:', cacheError.message);
+          setSyncWarning('Hindi mai-save ang offline checkpoint sa device na ito.');
+        }
+      }
       // Every newly loaded scene starts with its narration. A failure overlay
       // remains on the current question and can be retried without losing it.
       setShowChoices(false);
@@ -360,7 +575,36 @@ export default function StoryPlayer() {
         setShowChoices(false);
       }
     } catch (err) {
-      setError(err.message);
+      if (!game.offline && isNetworkError(err)) {
+        try {
+          const userId = await getStudentId();
+          if (!userId) throw err;
+          const pack = await apiFetch('/stories/offline-pack');
+          const previous = await loadOfflineProgress(userId, storyId);
+          const progress = {
+            ...makeOfflineProgress(userId, storyId, game.scene.id, game.session.id, previous),
+            actions: [
+              ...(previous?.actions || []),
+              { id: actionId, choiceId, sceneId: game.scene.id },
+            ],
+          };
+          const local = localGame(pack, storyId, {
+            ...progress,
+            actions: progress.actions.slice(0, -1),
+          }, game.scene.id);
+          if (!local) throw new Error('Hindi naka-save ang kasalukuyang eksena para laruin offline.');
+          const action = advanceOfflineGame(local, actionId, choiceId);
+          await saveOfflineProgress(action.progress);
+          setGame(action.game);
+          setFailure(action.failure);
+          setShowChoices(false);
+          setNote('Nawala ang internet. Naka-save sa device ang progress at awtomatikong susubukang i-sync kapag bumalik ang koneksyon.');
+        } catch (offlineError) {
+          setError(offlineError.message || err.message);
+        }
+      } else {
+        setError(err.message);
+      }
     } finally {
       setBusy(false);
     }
@@ -406,8 +650,18 @@ export default function StoryPlayer() {
                 <button type="button" className="vn-choice" onClick={() => start(true)}>Umulit</button>
               </div>
               <p className="vn-saved-note">
-                May naka-save kang laro sa &ldquo;{pausedScene?.title || 'Eksena'}&rdquo;. Gusto mo bang magsimula muli o magpatuloy kung saan ka huling huminto?
+                {entry.savedGame.offline
+                  ? 'May offline progress na naka-save sa device na ito. Magpapatuloy ito sa parehong eksena at awtomatikong susubukang i-sync kapag may internet.'
+                  : `May naka-save kang laro sa “${pausedScene?.title || 'Eksena'}”. Gusto mo bang magsimula muli o magpatuloy kung saan ka huling huminto?`}
               </p>
+              {syncWarning && (
+                <div className="alert alert-warn" role="status">
+                  {syncWarning}{' '}
+                  <button type="button" className="btn btn-ghost" onClick={() => window.location.reload()}>
+                    Subukang i-sync muli
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="vn-entry-content">
@@ -469,6 +723,7 @@ export default function StoryPlayer() {
         <style>{ART_CSS}</style>
         <RotatePrompt />
         {failHasArt && <SceneArt key={`failure-${failure.scene?.id || scene?.id}`} bg={failBg} objects={failObjects} />}
+        {game.offline && <div className="vn-offline-badge" role="status">Naka-save sa device · awtomatikong susubukang i-sync kapag may internet</div>}
         <Link className="vn-back" to="/home">
           ← Stories
         </Link>
@@ -499,7 +754,13 @@ export default function StoryPlayer() {
       <style>{ART_CSS}</style>
       <RotatePrompt />
       {hasArt && <SceneArt key={`scene-${scene?.id}`} bg={bg} objects={objects} />}
-      {game.offline && <div className="vn-offline-badge" role="status">Naka-save offline · hindi masi-sync ang progreso</div>}
+      {game.offline && (
+        <div className="vn-offline-badge" role="status">
+          {game.offlineProgress?.actions?.length
+            ? `Naka-save sa device · ${game.offlineProgress.actions.length} aksyon ang nakapila para i-sync`
+            : 'Naka-save sa device · awtomatikong mag-si-sync kapag may internet'}
+        </div>
+      )}
       {completed && <div className="vn-complete-toast" role="status">⭐ Tapos na ang kuwento!</div>}
 
       <Link className="vn-back" to="/home" onClick={(e) => e.stopPropagation()}>
