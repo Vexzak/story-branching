@@ -90,7 +90,7 @@ export default function Login() {
   return (
     <div className="center-screen kids-theme">
       <div className="auth-card">
-        <h1 className="auth-title">📖 Pakikipagsapalaran sa Kuwento</h1>
+        <h1 className="auth-title">Pakikipagsapalaran sa Kuwento</h1>
         <p className="auth-subtitle">Mag-sign in para maipagpatuloy ang mga kuwento mo.</p>
 
         {recoveryNotice && <div className={`alert ${recoveryNotice.tone}`} role="status" aria-live="polite">{recoveryNotice.text} <Link to="/recovery-status">Tingnan ang kahilingan</Link></div>}

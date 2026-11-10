@@ -20,14 +20,14 @@ function Icon({ name }) {
   );
 }
 
-function SummaryCard({ label, value, hint, accent, icon }) {
+function SummaryCard({ label, value, hint, accent, icon, text }) {
   return (
     <article className="analytics-summary-card" style={{ '--summary-accent': accent }}>
       <div className="analytics-summary-top">
         <span className="analytics-summary-label">{label}</span>
         <span className="analytics-summary-icon"><Icon name={icon} /></span>
       </div>
-      <strong className="analytics-summary-value">{value}</strong>
+      <strong className={text ? 'analytics-summary-value analytics-summary-value-text' : 'analytics-summary-value'}>{value}</strong>
       {hint && <small>{hint}</small>}
     </article>
   );
@@ -80,8 +80,8 @@ export default function StoryAnalyticsDashboard({ analytics, sessions = [] }) {
         <SummaryCard icon="users" label="Kabuuang mag-aaral" value={summary.totalStudents} hint="mga account ng mag-aaral na nakarehistro" accent="#2563eb" />
         <SummaryCard icon="check" label="Kabuuang pagkumpleto" value={`${summary.completionRate}%`} hint="mga pares ng mag-aaral at kuwentong nasimulan at natapos" accent="#2563eb" />
         <SummaryCard icon="repeat" label="Karaniwang pagsubok bawat eksena" value={summary.averageAttemptsPerScene ?? '—'} hint={summary.averageAttemptsPerScene === null ? 'Wala pang naitalang nakapasa' : 'sa mga mag-aaral na nakapasa'} accent="#2563eb" />
-        <SummaryCard icon="smile" label="Pinakamadaling kuwento" value={summary.easiestStory?.title || 'Kulang ang datos'} hint={summary.easiestStory ? `${summary.easiestStory.averageAttemptsPerScene} pagsubok bawat napagtagumpayang eksena` : 'Kailangang may mag-aaral munang makapasa sa mga eksena'} accent="#2563eb" />
-        <SummaryCard icon="flag" label="Pinakamahirap na kuwento" value={summary.hardestStory?.title || 'Kulang ang datos'} hint={summary.hardestStory ? `${summary.hardestStory.averageAttemptsPerScene} pagsubok bawat napagtagumpayang eksena` : 'Kailangang may mag-aaral munang makapasa sa mga eksena'} accent="#2563eb" />
+        <SummaryCard text icon="smile" label="Pinakamadaling kuwento" value={summary.easiestStory?.title || 'Kulang ang datos'} hint={summary.easiestStory ? `${summary.easiestStory.averageAttemptsPerScene} pagsubok bawat napagtagumpayang eksena` : 'Kailangang may mag-aaral munang makapasa sa mga eksena'} accent="#2563eb" />
+        <SummaryCard text icon="flag" label="Pinakamahirap na kuwento" value={summary.hardestStory?.title || 'Kulang ang datos'} hint={summary.hardestStory ? `${summary.hardestStory.averageAttemptsPerScene} pagsubok bawat napagtagumpayang eksena` : 'Kailangang may mag-aaral munang makapasa sa mga eksena'} accent="#2563eb" />
       </section>
 
       {stories.length === 0 ? <EmptyStories /> : <>

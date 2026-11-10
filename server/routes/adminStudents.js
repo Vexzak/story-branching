@@ -23,11 +23,15 @@ async function emailFor(userId) {
   return data?.user?.email ?? null;
 }
 
-/** GET /students?search=&page=1&pageSize=15 */
+/** GET /students?search=&role=all|student|admin&page=1&pageSize=15 */
 router.get('/students', async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 15));
+    const role = String(req.query.role ?? 'all');
+    if (!['all', 'student', 'admin'].includes(role)) {
+      throw new HttpError(400, 'Choose all accounts, students, or admins.');
+    }
     const search = String(req.query.search ?? '')
       .replace(/[%,()\\*]/g, ' ')
       .trim()
@@ -40,6 +44,8 @@ router.get('/students', async (req, res, next) => {
       .neq('id', req.profile.id)
       .order('username', { ascending: true })
       .range((page - 1) * pageSize, page * pageSize - 1);
+
+    if (role !== 'all') query = query.eq('role', role);
 
     if (search) {
       query = query.or(`username.ilike.%${search}%,display_name.ilike.%${search}%`);

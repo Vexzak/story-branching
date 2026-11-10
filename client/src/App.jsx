@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import { supabase } from './supabase';
 import { apiFetch } from './api';
@@ -214,19 +214,19 @@ function AppShell({ children }) {
         <nav className="topbar-nav">
           {profile?.role === 'admin' ? (
             <>
-              <Link to="/admin">Dashboard ng admin</Link>
-              <Link
+              <NavLink to="/admin" end>Dashboard ng admin</NavLink>
+              <NavLink
                 to="/admin/students"
                 className="nav-students-link"
               >
                 Students
-              </Link>
-              <Link to="/admin/stories">Mga Kuwento</Link>
-              {profile?.can_manage_admins && <Link to="/admin/accounts">Mga account ng admin</Link>}
+              </NavLink>
+              <NavLink to="/admin/stories">Mga Kuwento</NavLink>
+              {profile?.can_manage_admins && <NavLink to="/admin/accounts">Mga account ng admin</NavLink>}
               <PasswordResetBell count={pendingPasswordResets} />
             </>
           ) : (
-            <Link to="/home">Mga Kuwento</Link>
+            <NavLink to="/home">Mga Kuwento</NavLink>
           )}
           <span className="username-chip" title="Signed in as">
             {profile?.username}

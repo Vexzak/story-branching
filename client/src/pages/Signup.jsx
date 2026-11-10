@@ -84,7 +84,7 @@ export default function Signup() {
 
   return (
     <div className="center-screen kids-theme">
-      <div className="auth-card">
+      <div className="auth-card signup-auth-card">
         <h1 className="auth-title">Gumawa ng account</h1>
         <p className="auth-subtitle">Dito maaaring gumawa ng account ang mga mag-aaral. Humingi sa guro ng account ng admin.</p>
 

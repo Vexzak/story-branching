@@ -5,8 +5,8 @@ import {
 } from 'recharts';
 
 const STATUS_META = {
-  completed: { label: 'Natapos', color: '#2563eb' },
-  in_progress: { label: 'Kasalukuyang naglalaro', color: '#2563eb' },
+  completed: { label: 'Natapos', color: '#7c3aed' },
+  in_progress: { label: 'Kasalukuyang naglalaro', color: '#1e3a8a' },
   abandoned: { label: 'Hindi tinapos', color: '#93c5fd' },
 };
 

@@ -10,17 +10,32 @@ const STATUS_LABELS = {
 };
 
 function RecentActivity({ sessions }) {
+  const [showAll, setShowAll] = useState(false);
+  const visibleSessions = showAll ? sessions : sessions.slice(0, 5);
+
   return (
     <section className="analytics-panel analytics-recent-panel">
       <div className="analytics-panel-heading">
         <div><h2>Kamakailang aktibidad</h2><p>Pinakabagong sesyon ng mga mag-aaral sa kuwento.</p></div>
-        <Link to="/admin/students">Tingnan ang mga mag-aaral</Link>
+        <div className="analytics-recent-actions">
+          {sessions.length > 5 && (
+            <button
+              type="button"
+              className="analytics-activity-toggle"
+              aria-expanded={showAll}
+              onClick={() => setShowAll((expanded) => !expanded)}
+            >
+              {showAll ? 'Ipakita nang kaunti' : `Ipakita lahat (${sessions.length})`}
+              <span aria-hidden="true">{showAll ? '↑' : '↓'}</span>
+            </button>
+          )}
+        </div>
       </div>
       {sessions.length === 0 ? <p className="analytics-empty-chart">Wala pang sesyon sa kuwento.</p> : (
         <div className="table-wrap">
           <table className="table">
             <thead><tr><th>Mag-aaral</th><th>Kuwento</th><th>Estado</th><th>Huling aktibidad</th></tr></thead>
-            <tbody>{sessions.map((session) => {
+            <tbody>{visibleSessions.map((session) => {
               const name = session.profiles?.display_name || session.profiles?.username || 'Mag-aaral';
               return (
                 <tr key={session.id}>
