@@ -2153,7 +2153,7 @@ function buildMap(scenes, choices, startId) {
     }
   });
 
-  if (!startId || !byId.has(startId)) return { rows: [], edges: [], lanes: 1, loose: eksena, problems, incoming, byId };
+  if (!startId || !byId.has(startId)) return { rows: [], edges: [], lanes: 1, loose: scenes, problems, incoming, byId };
 
   const rows = [];
   const lane = {};
@@ -2194,7 +2194,7 @@ function buildMap(scenes, choices, startId) {
   return { rows, edges, lane, rowOf, lanes: maxLane + 1, loose: scenes.filter((s) => !(s.id in lane)), problems, incoming, byId };
 }
 
-function StoryMap({ eksena, choices, startId, activeId, busy, onPick }) {
+function StoryMap({ scenes, choices, startId, activeId, busy, onPick }) {
   const map = useMemo(() => buildMap(scenes, choices, startId), [scenes, choices, startId]);
   const x = (l) => MAP_PAD + l * MAP_LANE;
   const y = (i) => i * MAP_ROW + MAP_ROW / 2;
