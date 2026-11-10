@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { supabaseAdmin } from '../supabase.js';
+import { env } from '../env.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { HttpError } from '../middleware/error.js';
 
@@ -34,8 +35,9 @@ router.get('/students', async (req, res, next) => {
 
     let query = supabaseAdmin
       .from('profiles')
-      .select('id, username, display_name, created_at', { count: 'exact' })
-      .eq('role', 'student')
+      .select('id, username, display_name, role, can_manage_admins, created_at', { count: 'exact' })
+      .eq('can_manage_admins', false)
+      .neq('id', req.profile.id)
       .order('username', { ascending: true })
       .range((page - 1) * pageSize, page * pageSize - 1);
 
@@ -47,16 +49,17 @@ router.get('/students', async (req, res, next) => {
     if (error) throw error;
 
     const ids = (rows ?? []).map((r) => r.id);
+    const studentIds = (rows ?? []).filter((r) => r.role === 'student').map((r) => r.id);
     const statsById = new Map();
     let emails = [];
-    if (ids.length) {
+    if (studentIds.length) {
       const { data: stats, error: statsError } = await supabaseAdmin.rpc('admin_student_stats', {
-        p_student_ids: ids,
+        p_student_ids: studentIds,
       });
       if (statsError) throw statsError;
       for (const s of stats ?? []) statsById.set(s.student_id, s);
-      emails = await Promise.all(ids.map(emailFor));
     }
+    if (ids.length) emails = await Promise.all(ids.map(emailFor));
 
     const students = (rows ?? []).map((r, i) => {
       const s = statsById.get(r.id) ?? {};
@@ -64,6 +67,8 @@ router.get('/students', async (req, res, next) => {
         id: r.id,
         username: r.username,
         display_name: r.display_name,
+        role: r.role,
+        can_manage_admins: r.can_manage_admins,
         email: emails[i] ?? null,
         created_at: r.created_at,
         total_sessions: num(s.total_sessions),
@@ -73,6 +78,59 @@ router.get('/students', async (req, res, next) => {
     });
 
     res.json({ students, total: count ?? 0, page, pageSize });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** PATCH /students/:studentId/role - promote or demote a regular account. */
+router.patch('/students/:studentId/role', async (req, res, next) => {
+  try {
+    const { studentId } = req.params;
+    const { role } = req.body ?? {};
+    assertUuid(studentId, 'account id');
+    if (role !== 'student' && role !== 'admin') {
+      throw new HttpError(400, 'Choose either student or admin.');
+    }
+    if (studentId === req.profile.id) {
+      throw new HttpError(400, 'You cannot change your own account role.');
+    }
+
+    const { data: target, error: targetError } = await supabaseAdmin
+      .from('profiles')
+      .select('id, username, role, can_manage_admins')
+      .eq('id', studentId)
+      .maybeSingle();
+    if (targetError) throw targetError;
+    if (!target) throw new HttpError(404, 'Account not found.');
+    const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(studentId);
+    if (authUserError) throw authUserError;
+    const targetEmail = authUser?.user?.email?.trim().toLowerCase();
+    if (target.can_manage_admins || (env.ADMIN_EMAIL && targetEmail === env.ADMIN_EMAIL)) {
+      throw new HttpError(403, 'Superadmin accounts cannot be changed here.');
+    }
+    if (target.role === role) {
+      return res.json({ account: { id: target.id, username: target.username, role: target.role } });
+    }
+
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ role, can_manage_admins: false })
+      .eq('id', studentId)
+      .select('id, username, role')
+      .single();
+    if (updateError) throw updateError;
+
+    const { error: auditError } = await supabaseAdmin.from('audit_logs').insert({
+      actor_id: req.profile.id,
+      action: 'account.role.update',
+      target_type: 'profile',
+      target_id: studentId,
+      details: { username: target.username, from: target.role, to: role },
+    });
+    if (auditError) console.error('Audit log failed:', auditError.message);
+
+    res.json({ account: updated });
   } catch (err) {
     next(err);
   }

@@ -28,7 +28,7 @@ begin
              'full_story_text', s.full_story_text,
              'description', s.description,
              'cover_image_path', s.cover_image_path
-           ),
+           ),student top controls
            'starting_scene_id', s.starting_scene_id,
            'scenes', coalesce((
              select jsonb_object_agg(sc.id::text, jsonb_build_object(

@@ -77,6 +77,7 @@ async function main() {
       username,
       display_name: displayName,
       role: 'admin',
+      can_manage_admins: true,
     },
     { onConflict: 'id' }
   );

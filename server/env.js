@@ -22,6 +22,7 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: Number(process.env.PORT || 4000),
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  ADMIN_EMAIL: (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
   SUPABASE_URL: required('SUPABASE_URL'),
   SUPABASE_ANON_KEY: required('SUPABASE_ANON_KEY'),
   SUPABASE_SERVICE_ROLE_KEY: required('SUPABASE_SERVICE_ROLE_KEY'),

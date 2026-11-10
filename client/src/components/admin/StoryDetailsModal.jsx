@@ -1,5 +1,10 @@
 import { useEffect } from 'react';
-import { SceneAttemptsChart, SceneReachChart } from './StoryAnalyticsCharts';
+import {
+  AttemptsDonut,
+  PassOutcomeDonut,
+  SceneAttemptsChart,
+  SceneReachChart,
+} from './StoryAnalyticsCharts';
 
 function DetailTile({ label, value, hint, color }) {
   return (
@@ -11,15 +16,24 @@ function DetailTile({ label, value, hint, color }) {
   );
 }
 
-function Highlight({ title, scene, detail, color }) {
+function Highlight({ title, scene, detail, color, tone }) {
   return (
-    <div className="story-highlight" style={{ '--story-accent': color }}>
+    <div className={`story-highlight story-highlight-${tone}`} style={{ '--story-accent': color }}>
       <span>{title}</span>
       {scene ? <>
         <strong>{scene.title}</strong>
         <small>{detail(scene)}</small>
       </> : <small>Kulang pa ang datos ng paglalaro.</small>}
     </div>
+  );
+}
+
+function Panel({ title, subtitle, children, className = '' }) {
+  return (
+    <section className={`analytics-panel story-detail-chart-panel ${className}`}>
+      <div className="analytics-panel-heading"><div><h3>{title}</h3><p>{subtitle}</p></div></div>
+      {children}
+    </section>
   );
 }
 
@@ -39,16 +53,22 @@ export default function StoryDetailsModal({ story, onClose }) {
 
   const scenesWithData = story.scenes.filter((scene) => scene.reachedStudents > 0);
   const hasSceneAttempts = story.scenes.some((scene) => scene.passedStudents > 0);
+  const maxWrong = Math.max(1, ...story.mostWrongAnswers.map((a) => Number(a.selections) || 0));
 
   return (
     <div className="story-modal-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="story-modal" role="dialog" aria-modal="true" aria-labelledby="story-modal-title">
+      <section className="story-modal" style={{ '--story-accent': story.color }} role="dialog" aria-modal="true" aria-labelledby="story-modal-title">
         <header className="story-modal-header" style={{ '--story-accent': story.color }}>
-          <div>
-            <p className="story-modal-eyebrow">Ulat ng kuwento</p>
-            <h2 id="story-modal-title">{story.title}</h2>
+          <div className="story-modal-title-row">
+            {story.coverImage
+              ? <img src={story.coverImage} alt="" className="story-modal-cover" />
+              : <span className="story-modal-cover story-modal-cover-fallback" aria-hidden="true">📖</span>}
+            <div>
+              <p className="story-modal-eyebrow">Ulat ng kuwento</p>
+              <h2 id="story-modal-title">{story.title}</h2>
+            </div>
           </div>
-          <button type="button" className="story-modal-close" aria-label="Close story report" onClick={onClose}>×</button>
+          <button type="button" className="story-modal-close" aria-label="Isara ang ulat ng kuwento" onClick={onClose}>×</button>
         </header>
 
         <div className="story-modal-body">
@@ -68,12 +88,14 @@ export default function StoryDetailsModal({ story, onClose }) {
           ) : <>
             <div className="story-highlights">
               <Highlight
+                tone="hard"
                 title="Pinakamahirap na eksena"
                 scene={story.hardestScene}
                 detail={(scene) => `Kinailangan ng mga mag-aaral ng ${scene.avgAttempts} pagsubok sa karaniwan bago makapasa.`}
                 color={story.color}
               />
               <Highlight
+                tone="drop"
                 title="Pinakamaraming hindi pa nakapasa"
                 scene={story.dropoffScene}
                 detail={(scene) => `${scene.droppedOff} sa ${scene.reachedStudents} mag-aaral na nakarating sa eksenang ito ang wala pang naitatalang tamang sagot.`}
@@ -81,25 +103,48 @@ export default function StoryDetailsModal({ story, onClose }) {
               />
             </div>
 
-            <section className="analytics-panel story-detail-chart-panel">
-              <div className="analytics-panel-heading"><div><h3>Mga mag-aaral na nakarating sa bawat eksena</h3><p>Ihambing ang bilang ng mga nakarating at nakapasa sa isang eksena.</p></div></div>
-              {scenesWithData.length ? <SceneReachChart scenes={scenesWithData} color={story.color} /> : <p className="analytics-empty-chart">Wala pang naitalang pagpili sa mga eksena.</p>}
-            </section>
+            <div className="modal-chart-pair">
+              <Panel title="Resulta ng mga eksena" subtitle="Nakapasa laban sa wala pang tamang sagot, sa lahat ng eksena.">
+                <PassOutcomeDonut scenes={scenesWithData} color={story.color} />
+              </Panel>
+              <Panel title="Hati ng mga pagsubok" subtitle="Ilang pagsubok ang kinailangan bago makapasa.">
+                {hasSceneAttempts
+                  ? <AttemptsDonut scenes={story.scenes} color={story.color} />
+                  : <p className="analytics-empty-chart">Lalabas ito kapag may mga mag-aaral nang nakapasa.</p>}
+              </Panel>
+            </div>
 
-            <section className="analytics-panel story-detail-chart-panel">
-              <div className="analytics-panel-heading"><div><h3>Mga pagsubok bago makapasa</h3><p>Isang beses binibilang ang bawat mag-aaral sa bawat eksena, batay sa una niyang matagumpay na paglalaro.</p></div></div>
+            <Panel title="Mga mag-aaral na nakarating sa bawat eksena" subtitle="Ihambing ang bilang ng mga nakarating at nakapasa sa isang eksena.">
+              {scenesWithData.length ? <SceneReachChart scenes={scenesWithData} color={story.color} /> : <p className="analytics-empty-chart">Wala pang naitalang pagpili sa mga eksena.</p>}
+            </Panel>
+
+            <Panel title="Mga pagsubok bago makapasa" subtitle="Isang beses binibilang ang bawat mag-aaral sa bawat eksena, batay sa una niyang matagumpay na paglalaro.">
               {hasSceneAttempts ? <SceneAttemptsChart scenes={story.scenes} color={story.color} /> : <p className="analytics-empty-chart">Lalabas ang bilang ng mga pagsubok kapag may mga mag-aaral nang nakapasa sa mga eksena.</p>}
-            </section>
+            </Panel>
 
             <section className="analytics-panel story-scene-list-panel">
               <div className="analytics-panel-heading"><div><h3>Mga tala sa bawat eksena</h3><p>Maiikling buod ng progreso ng mga mag-aaral.</p></div></div>
               <ol className="story-scene-list">
-                {story.scenes.map((scene, index) => (
-                  <li key={scene.id}>
-                    <span className="story-scene-number" style={{ '--story-accent': story.color }}>Eksena {index + 1}</span>
-                    <div><strong>{scene.title}</strong><p>{scene.insight}</p></div>
-                  </li>
-                ))}
+                {story.scenes.map((scene, index) => {
+                  const reached = Number(scene.reachedStudents) || 0;
+                  const passed = Number(scene.passedStudents) || 0;
+                  const rate = reached ? Math.round((passed / reached) * 100) : null;
+                  return (
+                    <li key={scene.id}>
+                      <span className="story-scene-number" style={{ '--story-accent': story.color }}>Eksena {index + 1}</span>
+                      <div>
+                        <strong>{scene.title}</strong>
+                        <p>{scene.insight}</p>
+                        {rate !== null && (
+                          <div className="scene-pass-row">
+                            <span className="scene-pass-track" aria-hidden="true"><span style={{ width: `${rate}%`, background: story.color }} /></span>
+                            <small>{rate}% nakapasa ({passed} sa {reached})</small>
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
               </ol>
             </section>
 
@@ -110,8 +155,12 @@ export default function StoryDetailsModal({ story, onClose }) {
                   {story.mostWrongAnswers.map((answer, index) => (
                     <li key={`${answer.sceneTitle}-${answer.choiceText}-${index}`}>
                       <span className="wrong-answer-rank">{index + 1}</span>
-                      <div><strong>{answer.choiceText}</strong><small>{answer.sceneTitle}{answer.branchTitle ? ` → ${answer.branchTitle}` : ''}</small></div>
-                      <b>{answer.selections} {answer.selections === 1 ? 'selection' : 'selections'}</b>
+                      <div>
+                        <strong>{answer.choiceText}</strong>
+                        <small>{answer.sceneTitle}{answer.branchTitle ? ` → ${answer.branchTitle}` : ''}</small>
+                        <span className="wrong-bar-track" aria-hidden="true"><span style={{ width: `${((Number(answer.selections) || 0) / maxWrong) * 100}%` }} /></span>
+                      </div>
+                      <b>{answer.selections} {answer.selections === 1 ? 'pili' : 'pili'}</b>
                     </li>
                   ))}
                 </ol>

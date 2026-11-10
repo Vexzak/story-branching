@@ -125,88 +125,12 @@ export default function StudentRecords() {
 
   return (
     <div className="stack">
-      <PasswordResetRequests />
       <StudentList
         listState={listState}
         setListState={setListState}
         onOpen={(studentId) => setView({ type: 'mag-aaral', studentId })}
       />
     </div>
-  );
-}
-
-function PasswordResetRequests() {
-  const [requests, setRequests] = useState([]);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [reviewing, setReviewing] = useState('');
-
-  const load = useCallback(async () => {
-    try {
-      const result = await apiFetch('/admin/password-resets');
-      setRequests(result.requests || []);
-      setError('');
-    } catch (err) {
-      setError(err.message || 'Could not load password reset requests.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-    const timer = window.setInterval(load, 15000);
-    return () => window.clearInterval(timer);
-  }, [load]);
-
-  async function review(id, decision) {
-    setReviewing(id);
-    setError('');
-    try {
-      await apiFetch(`/admin/password-resets/${id}/review`, {
-        method: 'POST',
-        body: { decision },
-      });
-      await load();
-      window.dispatchEvent(new Event('password-reset-requests-updated'));
-    } catch (err) {
-      setError(err.message || 'Could not review this request.');
-    } finally {
-      setReviewing('');
-    }
-  }
-
-  return (
-    <section className="panel stack">
-      <div className="page-heading">
-        <div>
-          <h2>Mga kahilingan sa pagpapalit ng password</h2>
-          <p className="muted">Aprubahan o tanggihan ang mga kahilingan ng mag-aaral. Ipapadala sa nakarehistro nilang email ang link para magpalit ng password kapag naaprubahan.</p>
-        </div>
-      </div>
-      {error && <div className="alert alert-error">{error}</div>}
-      {loading ? <p className="muted">Naglo-load ng mga kahilingan…</p> : requests.length === 0 ? (
-        <p className="muted">Walang kahilingang naghihintay ng pagsusuri.</p>
-      ) : (
-        <div className="table-wrap">
-          <table className="table">
-            <thead><tr><th>Mag-aaral</th><th>Hiniling noong</th><th>Mga aksyon</th></tr></thead>
-            <tbody>{requests.map((request) => (
-              <tr key={request.id}>
-                <td>{request.student?.display_name || request.student?.username || 'Mag-aaral'} <span className="muted">({request.student?.username})</span></td>
-                <td>{new Date(request.requested_at).toLocaleString()}</td>
-                <td className="table-actions">
-                  <button type="button" className="btn btn-primary" disabled={Boolean(reviewing)} onClick={() => review(request.id, 'approved')}>
-                    {reviewing === request.id ? 'Sine-save…' : 'Aprubahan'}
-                  </button>
-                  <button type="button" className="btn" disabled={Boolean(reviewing)} onClick={() => review(request.id, 'rejected')}>Tanggihan</button>
-                </td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </div>
-      )}
-    </section>
   );
 }
 
@@ -219,30 +143,54 @@ function StudentList({ listState, setListState, onOpen }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
+  const [editingAccount, setEditingAccount] = useState(null);
+  const [roleDraft, setRoleDraft] = useState('student');
+  const [roleError, setRoleError] = useState('');
+  const [savingRole, setSavingRole] = useState(false);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError('');
-    apiFetch(`${BASE}/students?${new URLMaghanapParams({ search, page, pageSize: 15 })}`)
+    apiFetch(`${BASE}/students?${new URLSearchParams({ search, page, pageSize: 15 })}`)
       .then((d) => active && setData(d))
       .catch((e) => active && setError(e.message))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, [search, page]);
+  }, [search, page, reloadKey]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
   const runSearch = () => setListState({ search: input.trim(), page: 1 });
+
+  async function saveRole(event) {
+    event.preventDefault();
+    if (!editingAccount) return;
+    setSavingRole(true);
+    setRoleError('');
+    try {
+      await apiFetch(`${BASE}/students/${editingAccount.id}/role`, {
+        method: 'PATCH',
+        body: { role: roleDraft },
+      });
+      setEditingAccount(null);
+      setReloadKey((key) => key + 1);
+    } catch (err) {
+      setRoleError(err.message || 'Hindi ma-update ang uri ng account.');
+    } finally {
+      setSavingRole(false);
+    }
+  }
 
   return (
     <div className="stack">
       <div className="rec-head">
         <div>
-          <h1 className="rec-title">Mga mag-aaral</h1>
+          <h1 className="rec-title">Mga account</h1>
           <p className="rec-sub">
-            {data ? `${plural(data.total, 'mag-aaral')}${search ? ` matching “${search}”` : ''}` : 'Naglo-load…'}
+            {data ? `${plural(data.total, 'account')}${search ? ` matching “${search}”` : ''}` : 'Naglo-load…'}
           </p>
         </div>
       </div>
@@ -286,8 +234,10 @@ function StudentList({ listState, setListState, onOpen }) {
               <table className="rec-table">
                 <thead>
                   <tr>
+                    <th aria-label="Baguhin ang uri ng account"></th>
                     <th>Mag-aaral</th>
                     <th>Email</th>
+                    <th>Uri ng account</th>
                     <th>Nagparehistro</th>
                     <th>Mga sesyon</th>
                     <th>Natapos</th>
@@ -298,6 +248,24 @@ function StudentList({ listState, setListState, onOpen }) {
                 <tbody>
                   {data.students.map((s) => (
                     <tr key={s.id}>
+                      <td className="rec-role-edit-cell">
+                        <button
+                          type="button"
+                          className="rec-role-edit"
+                          aria-label={`Baguhin ang uri ng account ni ${s.username}`}
+                          title={s.can_manage_admins ? 'Protektado ang superadmin na account' : 'Baguhin ang uri ng account'}
+                          disabled={s.can_manage_admins}
+                          onClick={() => {
+                            setEditingAccount(s);
+                            setRoleDraft(s.role);
+                            setRoleError('');
+                          }}
+                        >
+                          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+                          </svg>
+                        </button>
+                      </td>
                       <td>
                         <div className="rec-user">
                           <div className="rec-avatar">{initial(s.username)}</div>
@@ -308,6 +276,7 @@ function StudentList({ listState, setListState, onOpen }) {
                         </div>
                       </td>
                       <td>{s.email ?? '—'}</td>
+                      <td><Badge kind={s.role === 'admin' ? 'admin' : 'info'}>{s.role === 'admin' ? 'Admin' : 'Mag-aaral'}</Badge></td>
                       <td>{new Date(s.created_at).toLocaleDateString()}</td>
                       <td>{s.total_sessions}</td>
                       <td>
@@ -317,9 +286,7 @@ function StudentList({ listState, setListState, onOpen }) {
                       </td>
                       <td title={fmt(s.last_activity)}>{timeAgo(s.last_activity)}</td>
                       <td>
-                        <button type="button" className="btn" onClick={() => onOpen(s.id)}>
-                          Tingnan
-                        </button>
+                        {s.role === 'student' && <button type="button" className="btn" onClick={() => onOpen(s.id)}>Tingnan</button>}
                       </td>
                     </tr>
                   ))}
@@ -351,6 +318,28 @@ function StudentList({ listState, setListState, onOpen }) {
           </div>
         </div>
       )}
+      {editingAccount && (
+        <div className="rec-role-overlay" onMouseDown={(event) => event.target === event.currentTarget && !savingRole && setEditingAccount(null)}>
+          <form className="rec-role-dialog" role="dialog" aria-modal="true" aria-labelledby="rec-role-title" onSubmit={saveRole}>
+            <h2 id="rec-role-title">Baguhin ang uri ng account</h2>
+            <p className="rec-muted">{editingAccount.display_name || editingAccount.username} (@{editingAccount.username})</p>
+            <label className="field">
+              <span>Pahintulot</span>
+              <select className="input" value={roleDraft} onChange={(event) => setRoleDraft(event.target.value)} disabled={savingRole}>
+                <option value="student">Mag-aaral</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            {roleError && <div className="alert alert-error" role="alert">{roleError}</div>}
+            <div className="rec-role-actions">
+              <button type="button" className="btn btn-ghost" disabled={savingRole} onClick={() => setEditingAccount(null)}>Kanselahin</button>
+              <button type="submit" className="btn btn-primary" disabled={savingRole || roleDraft === editingAccount.role}>
+                {savingRole ? 'Sine-save…' : 'I-save ang pagbabago'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
@@ -361,6 +350,7 @@ function StudentList({ listState, setListState, onOpen }) {
 function StudentDetail({ studentId, onBack, onOpenSession, onOpenStory }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [showAllSessions, setShowAllSessions] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [typed, setTyped] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -406,6 +396,7 @@ function StudentDetail({ studentId, onBack, onOpenSession, onOpenStory }) {
   if (!data) return <p>Naglo-load student…</p>;
 
   const { student, stats, sessions } = data;
+  const visibleSessions = showAllSessions ? sessions : sessions.slice(0, 5);
   const canDelete = typed.trim().toLowerCase() === student.username.toLowerCase();
 
   const byStory = new Map();
@@ -628,44 +619,44 @@ function StudentDetail({ studentId, onBack, onOpenSession, onOpenStory }) {
         {sessions.length === 0 ? (
           <p className="rec-empty">Wala pang sesyon.</p>
         ) : (
-          <div className="rec-wrap">
-            <table className="rec-table">
-              <thead>
-                <tr>
-                  <th>Kuwento</th>
-                  <th>Estado</th>
-                  <th>Nagsimula</th>
-                  <th>Huling aktibo</th>
-                  <th>Mga pinili</th>
-                  <th>Tama</th>
-                  <th>Mali</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {sessions.map((s) => (
-                  <tr key={s.id}>
-                    <td>
-                      <strong>{s.story_title}</strong>
-                    </td>
-                    <td>
-                      <StatusBadge status={s.status} />
-                    </td>
-                    <td>{fmt(s.started_at)}</td>
-                    <td title={fmt(s.last_activity_at)}>{timeAgo(s.last_activity_at)}</td>
-                    <td>{s.total_selections}</td>
-                    <td className="rec-ok-text">{s.correct_selections}</td>
-                    <td className="rec-bad-text">{s.incorrect_selections}</td>
-                    <td>
-                      <button type="button" className="btn" onClick={() => onOpenSession(s.id)}>
-                        Open
-                      </button>
-                    </td>
+          <>
+            {sessions.length > 5 && (
+              <details className="rec-session-history-details" onToggle={(event) => setShowAllSessions(event.currentTarget.open)}>
+                <summary>Ipakita ang lahat ng sesyon ({sessions.length})</summary>
+                <p>Lahat ng naitalang sesyon ang ipinapakita sa ibaba.</p>
+              </details>
+            )}
+            <div className="rec-wrap">
+              <table className="rec-table">
+                <thead>
+                  <tr>
+                    <th>Kuwento</th>
+                    <th>Estado</th>
+                    <th>Nagsimula</th>
+                    <th>Huling aktibo</th>
+                    <th>Mga pinili</th>
+                    <th>Tama</th>
+                    <th>Mali</th>
+                    <th></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {visibleSessions.map((s) => (
+                    <tr key={s.id}>
+                      <td><strong>{s.story_title}</strong></td>
+                      <td><StatusBadge status={s.status} /></td>
+                      <td>{fmt(s.started_at)}</td>
+                      <td title={fmt(s.last_activity_at)}>{timeAgo(s.last_activity_at)}</td>
+                      <td>{s.total_selections}</td>
+                      <td className="rec-ok-text">{s.correct_selections}</td>
+                      <td className="rec-bad-text">{s.incorrect_selections}</td>
+                      <td><button type="button" className="btn" onClick={() => onOpenSession(s.id)}>Open</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

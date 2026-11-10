@@ -22,6 +22,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import StudentRecords from './pages/StudentRecords';
 import StoryConfiguration from './pages/StoryConfiguration';
 import AdminAccounts from './pages/AdminAccounts';
+import PasswordResetBell from './components/admin/PasswordResetBell';
 
 // ---------------------------------------------------------------------------
 // Authentication context
@@ -217,14 +218,12 @@ function AppShell({ children }) {
               <Link
                 to="/admin/students"
                 className="nav-students-link"
-                title={pendingPasswordResets ? `${pendingPasswordResets} pending password reset request${pendingPasswordResets === 1 ? '' : 's'}` : undefined}
-                aria-label={pendingPasswordResets ? `Students, ${pendingPasswordResets} pending password reset request${pendingPasswordResets === 1 ? '' : 's'}` : 'Mga mag-aaral'}
               >
                 Students
-                {pendingPasswordResets > 0 && <span className="nav-notification-dot" aria-hidden="true" />}
               </Link>
               <Link to="/admin/stories">Mga Kuwento</Link>
               {profile?.can_manage_admins && <Link to="/admin/accounts">Mga account ng admin</Link>}
+              <PasswordResetBell count={pendingPasswordResets} />
             </>
           ) : (
             <Link to="/home">Mga Kuwento</Link>
