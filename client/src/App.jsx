@@ -10,6 +10,10 @@ import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from
 
 import { supabase } from './supabase';
 import { apiFetch } from './api';
+import {
+  initializeBackgroundMusic,
+  setBackgroundMusicEnabled,
+} from './lib/bgMusic';
 
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -124,8 +128,9 @@ function AuthProvider({ children }) {
 function FullScreenMessage({ children }) {
   return (
     <div className="center-screen">
-      <div className="panel">
-        <p>{children}</p>
+      <div className="fullscreen-loading" role="status" aria-live="polite">
+        <span className="fullscreen-loading-spinner" aria-hidden="true" />
+        <span>{children}</span>
       </div>
     </div>
   );
@@ -214,7 +219,7 @@ function AppShell({ children }) {
         <nav className="topbar-nav">
           {profile?.role === 'admin' ? (
             <>
-              <NavLink to="/admin" end>Dashboard ng admin</NavLink>
+              <NavLink to="/admin" end>Dashboard ng Admin</NavLink>
               <NavLink
                 to="/admin/students"
                 className="nav-students-link"
@@ -261,6 +266,17 @@ function HomeRedirect() {
 }
 
 export default function App() {
+  const location = useLocation();
+  const isPlayingStory = location.pathname.startsWith('/play/');
+
+  useEffect(() => {
+    initializeBackgroundMusic();
+  }, []);
+
+  useEffect(() => {
+    setBackgroundMusicEnabled(!isPlayingStory);
+  }, [isPlayingStory]);
+
   return (
     <AuthProvider>
       <Routes>

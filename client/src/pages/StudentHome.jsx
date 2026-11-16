@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../api';
+import { playHoverSound, stopHoverSound } from '../lib/hoverSound';
 
 const BOOK_THEMES = ['blue', 'purple', 'orange', 'teal'];
 
@@ -10,6 +11,8 @@ export default function StudentHome() {
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  useEffect(() => () => stopHoverSound(), []);
 
   useEffect(() => {
     let active = true;
@@ -50,6 +53,7 @@ export default function StudentHome() {
             <div
               key={story.id}
               className={`kids-story kids-${theme}${locked ? ' is-locked' : ''}`}
+              onPointerEnter={playHoverSound}
             >
               <button
                 type="button"
