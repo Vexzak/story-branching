@@ -157,11 +157,16 @@ function DailyProgressTooltip({ point, stories, selectedStoryId, dailyProgress, 
   );
 }
 
-function DailyProgressDot({ cx, cy, payload, story, isDimmed, isHovered, onHover }) {
+function DailyProgressDot({ cx, cy, payload, story, isDimmed, isHovered, onHover, chartContainerRef }) {
   if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
   return (
     <g>
-      {!isDimmed && <circle cx={cx} cy={cy} r={11} fill="transparent" onMouseEnter={() => onHover({ point: payload, x: cx, y: cy, storyId: story.id })} onMouseLeave={() => onHover(null)} />}
+      {!isDimmed && <circle cx={cx} cy={cy} r={11} fill="transparent" onMouseEnter={(event) => {
+        const pointRect = event.currentTarget.getBoundingClientRect();
+        const chartRect = chartContainerRef.current?.getBoundingClientRect();
+        if (!chartRect) return;
+        onHover({ point: payload, x: pointRect.left + pointRect.width / 2 - chartRect.left, y: pointRect.top + pointRect.height / 2 - chartRect.top, storyId: story.id });
+      }} onMouseLeave={() => onHover(null)} />}
       <circle cx={cx} cy={cy} r={isHovered ? 5 : 2.5} fill={isDimmed ? '#cbd5e1' : story.color} pointerEvents="none" />
     </g>
   );
@@ -207,7 +212,7 @@ function DailyProgressChart({ stories, dailyProgress, compact }) {
               {activeStories.map((story) => {
                 const isDimmed = selectedStoryId && selectedStoryId !== story.id;
                 const isHovered = hoveredPoint?.storyId === story.id;
-                return <Line key={story.id} type="monotone" dataKey={story.id} name={story.title} stroke={isDimmed ? '#cbd5e1' : story.color} strokeWidth={selectedStoryId === story.id ? 4 : 3} dot={(dotProps) => <DailyProgressDot {...dotProps} story={story} isDimmed={isDimmed} isHovered={isHovered && hoveredPoint.point?.date === dotProps.payload?.date} onHover={setHoveredPoint} />} activeDot={false} connectNulls />;
+                return <Line key={story.id} type="monotone" dataKey={story.id} name={story.title} stroke={isDimmed ? '#cbd5e1' : story.color} strokeWidth={selectedStoryId === story.id ? 4 : 3} dot={(dotProps) => <DailyProgressDot {...dotProps} story={story} isDimmed={isDimmed} isHovered={isHovered && hoveredPoint.point?.date === dotProps.payload?.date} onHover={setHoveredPoint} chartContainerRef={chartContainerRef} />} activeDot={false} connectNulls />;
               })}
             </LineChart>
           </ResponsiveContainer>
@@ -216,7 +221,7 @@ function DailyProgressChart({ stories, dailyProgress, compact }) {
             const bubbleWidth = Math.min(360, Math.max(width - 24, 240));
             const left = Math.max(bubbleWidth / 2 + 8, Math.min(hoveredPoint.x, width - bubbleWidth / 2 - 8));
             const arrowX = Math.max(10, Math.min(hoveredPoint.x - left + bubbleWidth / 2, bubbleWidth - 10));
-            return <DailyProgressTooltip point={hoveredPoint.point} stories={activeStories} selectedStoryId={selectedStoryId} dailyProgress={dailyProgress} left={left} top={Math.max(12, hoveredPoint.y - 9)} width={bubbleWidth} arrowX={arrowX} />;
+            return <DailyProgressTooltip point={hoveredPoint.point} stories={activeStories} selectedStoryId={selectedStoryId} dailyProgress={dailyProgress} left={left} top={hoveredPoint.y - 8} width={bubbleWidth} arrowX={arrowX} />;
           })()}
         </div>
       </>}

@@ -4437,7 +4437,7 @@ body:has(.kids-home) {
 .daily-progress-legend i { width: 10px; height: 10px; flex: none; border-radius: 50%; background: var(--story-color); }
 .daily-progress-legend button.is-dimmed i { background: #cbd5e1 !important; }
 .daily-progress-legend .daily-progress-clear { margin-left: 4px; color: #2563eb; font-weight: 650; }
-.daily-progress-chart { width: 100%; height: 190px; }
+.daily-progress-chart { position: relative; width: 100%; height: 190px; }
 .daily-progress-tooltip { position: absolute; z-index: 10000; min-width: 240px; max-width: min(360px, calc(100vw - 32px)); transform: translate(-50%, -100%); white-space: normal; pointer-events: none; }
 .daily-progress-tooltip .daily-progress-average-note { color: #cbd5e1; font-size: .72rem; font-weight: 500; }
 .daily-progress-chart .daily-progress-tooltip::after { position: absolute !important; top: auto !important; right: auto !important; bottom: -8px !important; left: var(--tooltip-arrow-x, 50%) !important; width: 14px !important; height: 9px !important; border: 0 !important; border-radius: 0 !important; background: #172b50 !important; clip-path: polygon(0 0, 100% 0, 50% 100%); transform: translateX(-50%) !important; }

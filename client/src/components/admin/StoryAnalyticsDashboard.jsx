@@ -72,7 +72,7 @@ function EmptyStories() {
   );
 }
 
-export default function StoryAnalyticsDashboard({ analytics, sessions = [], monthlyStats }) {
+export default function StoryAnalyticsDashboard({ analytics, sessions = [], weeklyStats }) {
   const [selectedStoryId, setSelectedStoryId] = useState(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const stories = analytics.stories.map((story, index) => ({ ...story, color: STORY_COLORS[index % STORY_COLORS.length] }));
@@ -82,8 +82,8 @@ export default function StoryAnalyticsDashboard({ analytics, sessions = [], mont
   return (
     <div className="story-analytics stack">
       <section className="analytics-summary-grid" aria-label="Overall story statistics">
-        <SummaryCard icon="users" label="Kabuuang mag-aaral" value={summary.totalStudents} hint="kumpara sa nakaraang buwan" trend={{ value: monthlyStats?.studentsAddedThisMonth ?? 0, direction: monthlyStats?.studentsAddedThisMonth > 0 ? 'up' : 'flat' }} accent="#2563eb" />
-        <SummaryCard icon="check" label="Pagkumpleto" value={`${monthlyStats?.currentMonthCompletionRate ?? summary.completionRate}%`} hint="kumpara sa nakaraang buwan" trend={monthlyStats?.completionRateChange === null || monthlyStats?.completionRateChange === undefined ? null : { value: `${Math.abs(monthlyStats.completionRateChange)}%`, direction: monthlyStats.completionRateChange > 0 ? 'up' : monthlyStats.completionRateChange < 0 ? 'down' : 'flat' }} accent="#2563eb" />
+        <SummaryCard icon="users" label="Kabuuang mag-aaral" value={summary.totalStudents} hint="kumpara sa nakaraang linggo" trend={{ value: weeklyStats?.studentsAddedThisWeek ?? 0, direction: weeklyStats?.studentsAddedThisWeek > 0 ? 'up' : 'flat' }} accent="#2563eb" />
+        <SummaryCard icon="check" label="Pagkumpleto" value={`${weeklyStats?.currentWeekCompletionRate ?? summary.completionRate}%`} hint="kumpara sa nakaraang linggo" trend={weeklyStats?.completionRateChange === null || weeklyStats?.completionRateChange === undefined ? null : { value: `${Math.abs(weeklyStats.completionRateChange)}%`, direction: weeklyStats.completionRateChange > 0 ? 'up' : weeklyStats.completionRateChange < 0 ? 'down' : 'flat' }} accent="#2563eb" />
         <SummaryCard text icon="smile" label="Pinakamadaling kuwento" value={summary.easiestStory?.title || 'Kulang ang datos'} hint={summary.easiestStory ? `${summary.easiestStory.averageAttemptsPerScene} karaniwang pagsubok bawat eksena` : 'Wala pang sapat na datos ng pagsubok'} accent="#2563eb" />
         <SummaryCard text icon="flag" label="Pinakamahirap na kuwento" value={summary.hardestStory?.title || 'Kulang ang datos'} hint={summary.hardestStory ? `${summary.hardestStory.averageAttemptsPerScene} karaniwang pagsubok bawat eksena` : 'Wala pang sapat na datos ng pagsubok'} accent="#2563eb" />
       </section>

@@ -151,8 +151,8 @@ router.post('/password-resets/:id/review', async (req, res, next) => {
 router.get('/dashboard', async (req, res, next) => {
   try {
     const now = new Date();
-    const currentMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
-    const previousMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString();
+    const currentWeekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const previousWeekStart = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
     const count = (table, apply) => {
       let q = supabaseAdmin.from(table).select('*', { count: 'exact', head: true });
       if (apply) q = apply(q);
@@ -169,11 +169,11 @@ router.get('/dashboard', async (req, res, next) => {
       abandonedSessions,
       pendingResets,
       choicesLogged,
-      studentsAddedThisMonth,
-      currentMonthSessions,
-      currentMonthCompleted,
-      previousMonthSessions,
-      previousMonthCompleted,
+      studentsAddedThisWeek,
+      currentWeekSessions,
+      currentWeekCompleted,
+      previousWeekSessions,
+      previousWeekCompleted,
     ] = await Promise.all([
       count('profiles', (q) => q.eq('role', 'student')),
       count('stories'),
@@ -184,11 +184,11 @@ router.get('/dashboard', async (req, res, next) => {
       count('game_sessions', (q) => q.eq('status', 'abandoned')),
       count('password_reset_requests', (q) => q.eq('status', 'pending')),
       count('choice_logs'),
-      count('profiles', (q) => q.eq('role', 'student').gte('created_at', currentMonthStart)),
-      count('game_sessions', (q) => q.gte('started_at', currentMonthStart)),
-      count('game_sessions', (q) => q.eq('status', 'completed').gte('started_at', currentMonthStart)),
-      count('game_sessions', (q) => q.gte('started_at', previousMonthStart).lt('started_at', currentMonthStart)),
-      count('game_sessions', (q) => q.eq('status', 'completed').gte('started_at', previousMonthStart).lt('started_at', currentMonthStart)),
+      count('profiles', (q) => q.eq('role', 'student').gte('created_at', currentWeekStart)),
+      count('game_sessions', (q) => q.gte('started_at', currentWeekStart)),
+      count('game_sessions', (q) => q.eq('status', 'completed').gte('started_at', currentWeekStart)),
+      count('game_sessions', (q) => q.gte('started_at', previousWeekStart).lt('started_at', currentWeekStart)),
+      count('game_sessions', (q) => q.eq('status', 'completed').gte('started_at', previousWeekStart).lt('started_at', currentWeekStart)),
     ]);
 
     const results = [
@@ -201,11 +201,11 @@ router.get('/dashboard', async (req, res, next) => {
       abandonedSessions,
       pendingResets,
       choicesLogged,
-      studentsAddedThisMonth,
-      currentMonthSessions,
-      currentMonthCompleted,
-      previousMonthSessions,
-      previousMonthCompleted,
+      studentsAddedThisWeek,
+      currentWeekSessions,
+      currentWeekCompleted,
+      previousWeekSessions,
+      previousWeekCompleted,
     ];
 
     const failed = results.find((r) => r.error);
@@ -213,11 +213,11 @@ router.get('/dashboard', async (req, res, next) => {
 
     const totalSessions = sessions.count ?? 0;
     const completed = completedSessions.count ?? 0;
-    const currentMonthRate = currentMonthSessions.count
-      ? Math.round((currentMonthCompleted.count / currentMonthSessions.count) * 100)
+    const currentWeekRate = currentWeekSessions.count
+      ? Math.round((currentWeekCompleted.count / currentWeekSessions.count) * 100)
       : null;
-    const previousMonthRate = previousMonthSessions.count
-      ? Math.round((previousMonthCompleted.count / previousMonthSessions.count) * 100)
+    const previousWeekRate = previousWeekSessions.count
+      ? Math.round((previousWeekCompleted.count / previousWeekSessions.count) * 100)
       : null;
 
     const { data: recentSessions, error: recentError } = await supabaseAdmin
@@ -240,10 +240,10 @@ router.get('/dashboard', async (req, res, next) => {
         inProgressSessions: inProgressSessions.count ?? 0,
         abandonedSessions: abandonedSessions.count ?? 0,
         completionRate: totalSessions > 0 ? Math.round((completed / totalSessions) * 100) : 0,
-        currentMonthCompletionRate: currentMonthRate,
-        studentsAddedThisMonth: studentsAddedThisMonth.count ?? 0,
-        completionRateChange: currentMonthRate !== null && previousMonthRate !== null
-          ? currentMonthRate - previousMonthRate
+        currentWeekCompletionRate: currentWeekRate,
+        studentsAddedThisWeek: studentsAddedThisWeek.count ?? 0,
+        completionRateChange: currentWeekRate !== null && previousWeekRate !== null
+          ? currentWeekRate - previousWeekRate
           : null,
         pendingPasswordResets: pendingResets.count ?? 0,
         totalChoiceSelections: choicesLogged.count ?? 0,

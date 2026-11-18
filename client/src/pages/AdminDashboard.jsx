@@ -113,7 +113,7 @@ export default function AdminDashboard() {
         <div className="analytics-page-actions"><button type="button" className="btn btn-outline-light" onClick={load} disabled={loading}>{loading ? 'Nire-refresh…' : 'I-refresh'}</button></div>
       </div>
       {error && <div className="alert alert-error">{error} <button type="button" className="analytics-retry-link" onClick={load}>I-refresh ang datos</button></div>}
-      <StoryAnalyticsDashboard analytics={data.analytics} sessions={sessions} monthlyStats={data.dashboard.stats} />
+      <StoryAnalyticsDashboard analytics={data.analytics} sessions={sessions} weeklyStats={data.dashboard.stats} />
       <div className="admin-lower-grid">
         <section className="analytics-panel admin-hardest-panel">
           <div className="analytics-panel-heading"><div><h2>Pinakamahirap na kuwento</h2><p>Batay sa karaniwang bilang ng pagsubok bawat eksena.</p></div></div>
