@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { apiFetch } from '../api';
 import {
@@ -189,7 +189,7 @@ function shuffle(items) {
   return result;
 }
 
-function paginateStoryText(text, limit = 1100) {
+function paginateStoryText(text, limit = 400) {
   const paragraphs = (text ?? '').trim().split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
   if (!paragraphs.length) return [];
   const pages = [];
@@ -224,7 +224,35 @@ function BookButton({ onClick, highlighted = false }) {
   );
 }
 
-function BookModal({ story, pages, page, setPage, onClose }) {
+function BookModal({ story, page, setPage, onClose }) {
+  const [viewport, setViewport] = useState(() => ({
+    singlePage: window.matchMedia('(max-width: 650px)').matches,
+    compact: window.matchMedia('(max-width: 650px), (max-height: 600px)').matches,
+  }));
+  useEffect(() => {
+    const singlePageQuery = window.matchMedia('(max-width: 650px)');
+    const compactQuery = window.matchMedia('(max-width: 650px), (max-height: 600px)');
+    const update = () => setViewport({ singlePage: singlePageQuery.matches, compact: compactQuery.matches });
+    update();
+    singlePageQuery.addEventListener?.('change', update);
+    compactQuery.addEventListener?.('change', update);
+    return () => {
+      singlePageQuery.removeEventListener?.('change', update);
+      compactQuery.removeEventListener?.('change', update);
+    };
+  }, []);
+  const { singlePage, compact } = viewport;
+  const pages = useMemo(
+    () => paginateStoryText(story?.full_story_text, compact ? 150 : 400),
+    [story?.full_story_text, compact],
+  );
+  const currentPage = Math.min(page, Math.max(0, pages.length - 1));
+  useEffect(() => {
+    if (page !== currentPage) setPage(currentPage);
+  }, [page, currentPage, setPage]);
+  const step = singlePage ? 1 : 2;
+  const fallback = 'Wala pang tekstong nailalagay para sa istoryang ito.';
+
   return (
     <div className="vn-book-scrim" role="presentation" onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose();
@@ -237,16 +265,24 @@ function BookModal({ story, pages, page, setPage, onClose }) {
           </div>
           <button type="button" className="vn-book-close" onClick={onClose} aria-label="Isara ang aklat">Isara</button>
         </div>
-        <article className="vn-book-page" key={page}>
-          {pages.length ? pages[page] : 'Wala pang tekstong nailalagay para sa istoryang ito.'}
-        </article>
-        {pages.length > 0 && (
-          <div className="vn-book-controls">
-            <button type="button" onClick={() => setPage((current) => Math.max(0, current - 1))} disabled={page === 0}>Nakaraan</button>
-            <span>Pahina {page + 1} sa {pages.length}</span>
-            <button type="button" onClick={() => setPage((current) => Math.min(pages.length - 1, current + 1))} disabled={page === pages.length - 1}>Susunod</button>
-          </div>
-        )}
+        <div className={`vn-book-spread${singlePage ? ' vn-book-spread-single' : ''}`} key={`${page}-${singlePage}`}>
+          <article className="vn-book-page vn-book-page-left">
+            <div className="vn-book-page-text">{pages.length ? pages[currentPage] : fallback}</div>
+            {pages.length > 0 && <span className="vn-book-page-number vn-book-page-number-left">Pahina {currentPage + 1}</span>}
+          </article>
+          {!singlePage && pages[currentPage + 1] && (
+            <article className="vn-book-page vn-book-page-right">
+              <div className="vn-book-page-text">{pages[currentPage + 1]}</div>
+              <span className="vn-book-page-number vn-book-page-number-right">Pahina {currentPage + 2}</span>
+            </article>
+          )}
+          {pages.length > 0 && (
+            <div className="vn-book-controls">
+              <button type="button" onClick={() => setPage((current) => Math.max(0, current - step))} disabled={page === 0}>Nakaraan</button>
+              <button type="button" onClick={() => setPage((current) => Math.min(pages.length - 1, current + step))} disabled={page + step >= pages.length}>Susunod</button>
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );
@@ -611,7 +647,6 @@ export default function StoryPlayer() {
   }
 
   const storyForBook = game?.story?.full_story_text?.trim() ? game.story : entry?.story ?? game?.story;
-  const bookPages = paginateStoryText(storyForBook?.full_story_text);
   const openBook = () => { setBookPage(0); setBookOpen(true); };
   const closeBook = () => setBookOpen(false);
 
@@ -679,7 +714,7 @@ export default function StoryPlayer() {
               <span className="vn-book-tutorial-arrow" aria-hidden="true">&#8599;</span>
             </div>
           )}
-          {bookOpen && <BookModal story={storyForBook} pages={bookPages} page={bookPage} setPage={setBookPage} onClose={closeBook} />}
+          {bookOpen && <BookModal story={storyForBook} page={bookPage} setPage={setBookPage} onClose={closeBook} />}
         </div>
       );
     }
@@ -729,18 +764,20 @@ export default function StoryPlayer() {
         </Link>
         <BookButton onClick={openBook} />
         <div className="vn-box vn-failure-panel vn-narration-panel">
-          <div className="vn-name">{failure.scene?.title || 'Not quite'}</div>
+          <div className="vn-scene-header">
+            <div className="vn-name">{failure.scene?.title || 'Not quite'}</div>
+            <div className="vn-choices">
+              <button type="button" className="vn-choice" onClick={() => setFailure(null)}>
+                Subukan muli
+              </button>
+            </div>
+          </div>
           <p className="vn-text">
             {failure.scene?.narration || 'Hindi iyon ang tamang sagot.'}
           </p>
           {failure.feedback && <p className="vn-sub">{failure.feedback}</p>}
-          <div className="vn-choices">
-            <button type="button" className="vn-choice" onClick={() => setFailure(null)}>
-              Subukan muli
-            </button>
-          </div>
         </div>
-        {bookOpen && <BookModal story={storyForBook} pages={bookPages} page={bookPage} setPage={setBookPage} onClose={closeBook} />}
+        {bookOpen && <BookModal story={storyForBook} page={bookPage} setPage={setBookPage} onClose={closeBook} />}
       </div>
     );
   }
@@ -772,18 +809,22 @@ export default function StoryPlayer() {
         {error && <div className="alert alert-error">{error}</div>}
 
         {completed ? (
-          <div className="vn-choices">
+          <div className="vn-choices vn-completed-content">
             {audioPrompt}
             {note && <p className="vn-sub">{note}</p>}
-            <div className="vn-name">{scene?.title}</div>
+            <div className="vn-scene-header">
+              <div className="vn-name">{scene?.title}</div>
+              <div className="vn-complete-actions">
+                <button type="button" className="vn-choice" onClick={() => start(true)}>
+                  Laruin muli
+                </button>
+                <Link className="vn-choice" to="/home">
+                  Bumalik sa mga kuwento
+                </Link>
+              </div>
+            </div>
             <p className="vn-text">{scene?.narration}</p>
             {scene?.dialogue && <p className="vn-text vn-dialogue">“{scene.dialogue}”</p>}
-            <button type="button" className="vn-choice" onClick={() => start(true)}>
-              Laruin muli
-            </button>
-            <Link className="vn-choice" to="/home">
-              Bumalik sa mga kuwento
-            </Link>
           </div>
         ) : showChoices ? (
           <div className="vn-choice-screen">
@@ -816,28 +857,30 @@ export default function StoryPlayer() {
           <>
             {audioPrompt}
             {note && <p className="vn-sub">{note}</p>}
-            <div className="vn-name">{scene?.title}</div>
+            <div className="vn-scene-header">
+              <div className="vn-name">{scene?.title}</div>
+              {hasChoices && (
+                <div className="vn-flow-actions">
+                  <button
+                    type="button"
+                    className="vn-choice vn-flow-next"
+                    disabled={busy}
+                    onClick={() => {
+                      if (scene?.scene_type === 'narrative' && choices.length === 1) choose(choices[0].id);
+                      else setShowChoices(true);
+                    }}
+                  >
+                    Magpatuloy
+                  </button>
+                </div>
+              )}
+            </div>
             <p className="vn-text">{scene?.narration}</p>
             {scene?.dialogue && <p className="vn-text vn-dialogue">“{scene.dialogue}”</p>}
-            {hasChoices && (
-              <div className="vn-flow-actions">
-                <button
-                  type="button"
-                  className="vn-choice vn-flow-next"
-                  disabled={busy}
-                  onClick={() => {
-                    if (scene?.scene_type === 'narrative' && choices.length === 1) choose(choices[0].id);
-                    else setShowChoices(true);
-                  }}
-                >
-                  Magpatuloy
-                </button>
-              </div>
-            )}
           </>
         )}
       </div>
-      {bookOpen && <BookModal story={storyForBook} pages={bookPages} page={bookPage} setPage={setBookPage} onClose={closeBook} />}
+      {bookOpen && <BookModal story={storyForBook} page={bookPage} setPage={setBookPage} onClose={closeBook} />}
     </div>
   );
 }

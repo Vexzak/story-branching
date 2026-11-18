@@ -93,6 +93,41 @@ function Donut({ title, subtitle, data, centerValue, centerLabel, emptyText, com
   );
 }
 
+function StoryReach({ stories }) {
+  const rankedStories = stories
+    .map((story) => ({ ...story, studentReach: Number(story.startedStudents) || 0 }))
+    .filter((story) => story.studentReach > 0)
+    .sort((a, b) => b.studentReach - a.studentReach)
+    .slice(0, 5);
+  const maxReach = Math.max(...rankedStories.map((story) => story.studentReach), 0);
+
+  return (
+    <section className="analytics-panel story-reach-panel">
+      <div className="analytics-panel-heading">
+        <div>
+          <h3>Abot ng bawat kuwento</h3>
+          <p>Natatanging mag-aaral na nagsimula sa bawat kuwento; nangunguna ang may pinakamaraming nagsimula.</p>
+        </div>
+      </div>
+      {rankedStories.length ? (
+        <ol className="story-reach-list">
+          {rankedStories.map((story) => (
+            <li key={story.id}>
+              <div className="story-reach-label">
+                <span title={story.title}>{story.title}</span>
+                <b>{story.studentReach} mag-aaral</b>
+              </div>
+              <div className="story-reach-track" aria-label={`${story.title}: ${story.studentReach} mag-aaral ang nagsimula`}>
+                <span style={{ width: `${(story.studentReach / maxReach) * 100}%` }} />
+              </div>
+            </li>
+          ))}
+        </ol>
+      ) : <p className="analytics-empty-chart">Wala pang mag-aaral na nagsimula ng kuwento.</p>}
+    </section>
+  );
+}
+
 function DailyProgressTooltip({ point, stories, selectedStoryId, dailyProgress, left, top, width, arrowX }) {
   if (!point?.date) return null;
   const dateKey = point.date;
@@ -191,14 +226,6 @@ function DailyProgressChart({ stories, dailyProgress, compact }) {
 
 export default function StoryInsightsCharts({ stories, sessions = [], dailyProgress = [] }) {
   const compact = useCompactCharts();
-  const started = stories.reduce((sum, s) => sum + (Number(s.startedStudents) || 0), 0);
-  const finished = stories.reduce((sum, s) => sum + (Number(s.finishedStudents) || 0), 0);
-
-  const completionData = [
-    { name: 'Natapos', value: finished, color: '#2563eb' },
-    { name: 'Hindi pa tapos', value: Math.max(started - finished, 0), color: '#dbeafe' },
-  ];
-
   const statusData = Object.entries(STATUS_META).map(([key, meta]) => ({
     name: meta.label,
     value: sessions.filter((s) => s.status === key).length,
@@ -209,15 +236,7 @@ export default function StoryInsightsCharts({ stories, sessions = [], dailyProgr
     <div className="stack">
       <DailyProgressChart stories={stories} dailyProgress={dailyProgress} compact={compact} />
       <div className="insight-grid">
-        <Donut
-          title="Pagkumpleto ng mga kuwento"
-          subtitle="Mga pares ng mag-aaral at kuwento: natapos laban sa nasimulan."
-          data={completionData}
-          centerValue={started ? `${Math.round((finished / started) * 100)}%` : '—'}
-          centerLabel="natapos"
-          emptyText="Wala pang nasimulang kuwento."
-          compact={compact}
-        />
+        <StoryReach stories={stories} />
         <Donut
           title="Estado ng mga kamakailang sesyon"
           subtitle="Mula sa pinakabagong mga sesyon na naitala."

@@ -4,9 +4,31 @@ import StoryAnalyticsDashboard from '../components/admin/StoryAnalyticsDashboard
 
 function RecentActivity({ sessions }) {
   const [showAll, setShowAll] = useState(false);
-  const visibleSessions = showAll ? sessions : sessions.slice(0, 5);
+  const visibleSessions = sessions.slice(0, 5);
+
+  useEffect(() => {
+    if (!showAll) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setShowAll(false);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [showAll]);
+
+  const renderSessions = (items) => items.map((session) => {
+    const name = session.profiles?.display_name || session.profiles?.username || 'Mag-aaral';
+    const initials = name.split(/\s+/).slice(0, 2).map((part) => part.charAt(0)).join('').toUpperCase();
+    return (
+      <article className="admin-activity-item" key={session.id}>
+        <span className="activity-avatar" aria-hidden="true">{initials}</span>
+        <div className="admin-activity-copy"><strong>{name}</strong><span>{session.status === 'completed' ? `Natapos ang kuwento na ${session.stories?.title || ''}` : session.status === 'in_progress' ? `Nagsimula sa kuwento na ${session.stories?.title || ''}` : `Bumalik sa kuwento na ${session.stories?.title || ''}`}</span></div>
+        <time>{session.last_activity_at ? new Date(session.last_activity_at).toLocaleString('fil-PH', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</time>
+      </article>
+    );
+  });
 
   return (
+    <>
     <section className="analytics-panel analytics-recent-panel">
       <div className="analytics-panel-heading">
         <div><h2>Aktibidad kamakailan</h2><p>Pinakabagong aktibidad ng mga mag-aaral sa mga kuwento.</p></div>
@@ -15,31 +37,33 @@ function RecentActivity({ sessions }) {
             <button
               type="button"
               className="analytics-activity-toggle"
-              aria-expanded={showAll}
-              onClick={() => setShowAll((expanded) => !expanded)}
+              aria-haspopup="dialog"
+              onClick={() => setShowAll(true)}
             >
-              {showAll ? 'Ipakita nang kaunti' : 'Tingnan lahat'}
-              <span aria-hidden="true">{showAll ? '↑' : '↓'}</span>
+              Tingnan lahat
+              <span aria-hidden="true">↓</span>
             </button>
           )}
         </div>
       </div>
       {sessions.length === 0 ? <p className="analytics-empty-chart">Wala pang sesyon sa kuwento.</p> : (
-        <div className="admin-activity-list">
-            {visibleSessions.map((session) => {
-              const name = session.profiles?.display_name || session.profiles?.username || 'Mag-aaral';
-              const initials = name.split(/\s+/).slice(0, 2).map((part) => part.charAt(0)).join('').toUpperCase();
-              return (
-                <article className="admin-activity-item" key={session.id}>
-                  <span className="activity-avatar" aria-hidden="true">{initials}</span>
-                  <div className="admin-activity-copy"><strong>{name}</strong><span>{session.status === 'completed' ? `Natapos ang kuwento na ${session.stories?.title || ''}` : session.status === 'in_progress' ? `Nagsimula sa kuwento na ${session.stories?.title || ''}` : `Bumalik sa kuwento na ${session.stories?.title || ''}`}</span></div>
-                  <time>{session.last_activity_at ? new Date(session.last_activity_at).toLocaleString('fil-PH', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</time>
-                </article>
-              );
-            })}
-        </div>
+        <div className="admin-activity-list">{renderSessions(visibleSessions)}</div>
       )}
     </section>
+    {showAll && (
+      <div className="admin-activity-modal-backdrop" onMouseDown={(event) => {
+        if (event.target === event.currentTarget) setShowAll(false);
+      }}>
+        <section className="admin-activity-modal" role="dialog" aria-modal="true" aria-labelledby="admin-activity-modal-title">
+          <header className="admin-activity-modal-header">
+            <div><h2 id="admin-activity-modal-title">Aktibidad kamakailan</h2><p>Lahat ng pinakabagong aktibidad ng mga mag-aaral.</p></div>
+            <button type="button" className="admin-activity-modal-close" aria-label="Isara" onClick={() => setShowAll(false)}>×</button>
+          </header>
+          <div className="admin-activity-modal-list">{renderSessions(sessions)}</div>
+        </section>
+      </div>
+    )}
+    </>
   );
 }
 
