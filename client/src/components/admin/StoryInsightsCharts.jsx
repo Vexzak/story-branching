@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, Sector,
-  ResponsiveContainer, Tooltip, XAxis, YAxis,
+  CartesianGrid, Cell, Line, LineChart, Pie, PieChart, Sector,
+  ResponsiveContainer, XAxis, YAxis,
 } from 'recharts';
 
 const STATUS_META = {
@@ -10,10 +10,9 @@ const STATUS_META = {
   abandoned: { label: 'Hindi tinapos', color: '#93c5fd' },
 };
 
-const CHART_COLORS = ['#2563eb', '#10b981', '#7c3aed', '#eab308', '#ef4444', '#0ea5e9', '#f97316'];
+const DAILY_COLORS = ['#2563eb', '#10b981', '#7c3aed', '#eab308'];
 
 const AXIS_TICK = { fill: '#64748b', fontSize: 12 };
-const shortTitle = (t = '', n = 18) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
 
 function useCompactCharts() {
   const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 680px)').matches);
@@ -26,19 +25,6 @@ function useCompactCharts() {
   }, []);
 
   return compact;
-}
-
-function ChartTooltip({ active, payload, label, suffix = '' }) {
-  if (!active || !payload?.length) return null;
-  const first = payload[0];
-  return (
-    <div className="analytics-tooltip">
-      <strong>{first.payload.fullTitle || label || first.name}</strong>
-      {payload.map((p) => (
-        <span key={p.dataKey || p.name}>{p.name}: <b>{p.value}{suffix}</b></span>
-      ))}
-    </div>
-  );
 }
 
 function Donut({ title, subtitle, data, centerValue, centerLabel, emptyText, compact }) {
@@ -107,30 +93,103 @@ function Donut({ title, subtitle, data, centerValue, centerLabel, emptyText, com
   );
 }
 
-function HorizontalBars({ title, subtitle, data, dataKey, name, suffix = '', domain, emptyText, compact }) {
+function DailyProgressTooltip({ point, stories, selectedStoryId, dailyProgress, left, top, width, arrowX }) {
+  if (!point?.date) return null;
+  const dateKey = point.date;
+  const date = new Date(`${dateKey}T00:00:00Z`).toLocaleDateString('fil-PH', { timeZone: 'UTC', dateStyle: 'full' });
+  const visibleStories = selectedStoryId
+    ? stories.filter((story) => story.id === selectedStoryId)
+    : stories;
+  if (!visibleStories.length) return null;
   return (
-    <section className="analytics-panel">
+    <div className="analytics-tooltip daily-progress-tooltip" style={{ left, top, width, '--tooltip-arrow-x': `${arrowX}px` }}>
+      <strong>{date}</strong>
+      <small className="daily-progress-average-note">Average ang berde bawat mag-aaral; kabuuan ang pula sa araw na ito.</small>
+      {visibleStories.map((story) => {
+        const studentCount = point?.[story.id] ?? 0;
+        const details = dailyProgress.find((entry) => entry.date === dateKey && entry.storyId === story.id);
+        return (
+          <div className="daily-progress-story-detail" key={story.id}>
+            <span className="daily-progress-student-count"><i style={{ background: story.color }} />{story.title}: <b>{studentCount} mag-aaral na umusad</b></span>
+            {details?.averageCorrectScenes !== null && details?.averageCorrectScenes !== undefined ? <>
+              <span className="daily-progress-average is-correct"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg>{details.averageCorrectScenes} tamang eksena bawat mag-aaral</span>
+              <span className="daily-progress-average is-mistake"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10m4.5-4.5L8 13l-4.5-4.5" /></svg>{details.totalAttempts} kabuuang pagsubok · {details.totalMistakes} mali</span>
+            </> : <span className="daily-progress-no-detail">Walang naitalang tamang eksena sa araw na ito.</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function DailyProgressDot({ cx, cy, payload, story, isDimmed, isHovered, onHover }) {
+  if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
+  return (
+    <g>
+      {!isDimmed && <circle cx={cx} cy={cy} r={11} fill="transparent" onMouseEnter={() => onHover({ point: payload, x: cx, y: cy, storyId: story.id })} onMouseLeave={() => onHover(null)} />}
+      <circle cx={cx} cy={cy} r={isHovered ? 5 : 2.5} fill={isDimmed ? '#cbd5e1' : story.color} pointerEvents="none" />
+    </g>
+  );
+}
+
+function DailyProgressChart({ stories, dailyProgress, compact }) {
+  const [selectedStoryId, setSelectedStoryId] = useState(null);
+  const [hoveredPoint, setHoveredPoint] = useState(null);
+  const chartContainerRef = useRef(null);
+  const activeStories = stories.slice(0, 4).map((story, index) => ({ ...story, color: DAILY_COLORS[index] }));
+  const today = new Date();
+  const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  const firstDay = todayUtc - 27 * 86400000;
+  const dailyLookup = new Map(dailyProgress.map((entry) => [`${entry.date}:${entry.storyId}`, entry.students]));
+  const chartData = Array.from({ length: 28 }, (_, index) => {
+    const date = new Date(firstDay + index * 86400000).toISOString().slice(0, 10);
+    return activeStories.reduce((point, story) => ({
+      ...point,
+      [story.id]: dailyLookup.get(`${date}:${story.id}`) || 0,
+    }), { date });
+  });
+  const hasActivity = dailyProgress.some((entry) => entry.date >= chartData[0]?.date && entry.date <= chartData.at(-1)?.date);
+
+  return (
+    <section className="analytics-panel daily-progress-panel">
       <div className="analytics-panel-heading">
-        <div><h3>{title}</h3><p>{subtitle}</p></div>
+        <div><h3>Pag-unlad ng mga mag-aaral bawat araw</h3><p>Bilang ng mga mag-aaral na umusad sa bawat kuwento sa nakalipas na 28 araw.</p></div>
       </div>
-      {data.length === 0 ? <p className="analytics-empty-chart">{emptyText}</p> : (
-        <ResponsiveContainer width="100%" height={Math.max(compact ? 170 : 220, data.length * (compact ? 38 : 46))}>
-          <BarChart data={data} layout="vertical" margin={{ top: 4, right: compact ? 8 : 24, left: 4, bottom: 4 }}>
-            <CartesianGrid horizontal={false} stroke="#e2e8f0" strokeDasharray="3 3" />
-            <XAxis type="number" domain={domain} tick={compact ? { ...AXIS_TICK, fontSize: 9 } : AXIS_TICK} tickFormatter={(v) => `${v}${suffix}`} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="name" width={compact ? 62 : 118} tick={compact ? { ...AXIS_TICK, fontSize: 9 } : AXIS_TICK} axisLine={false} tickLine={false} />
-            <Tooltip content={<ChartTooltip suffix={suffix} />} shared={false} isAnimationActive={false} cursor={false} />
-            <Bar dataKey={dataKey} name={name} radius={[0, 8, 8, 0]} barSize={compact ? 14 : 20}>
-              {data.map((d) => <Cell key={d.fullTitle} fill={d.fill} />)}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      )}
+      {!activeStories.length || !hasActivity ? <p className="analytics-empty-chart">Wala pang umusad na mag-aaral sa panahong ito.</p> : <>
+        <div className="daily-progress-legend" aria-label="Pumili ng kuwento sa tsart">
+          {activeStories.map((story) => {
+            const isSelected = selectedStoryId === story.id;
+            return <button type="button" key={story.id} className={selectedStoryId && !isSelected ? 'is-dimmed' : ''} aria-pressed={isSelected} onClick={() => setSelectedStoryId(isSelected ? null : story.id)}><i style={{ '--story-color': story.color }} />{story.title}</button>;
+          })}
+          {selectedStoryId && <button type="button" className="daily-progress-clear" onClick={() => setSelectedStoryId(null)}>Kanselahin</button>}
+        </div>
+        <div className="daily-progress-chart" ref={chartContainerRef} onMouseLeave={() => setHoveredPoint(null)}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 12, right: 18, left: 0, bottom: 4 }}>
+              <CartesianGrid stroke="#e6edf6" strokeDasharray="3 5" vertical={false} />
+              <XAxis dataKey="date" interval={compact ? 6 : 4} tickFormatter={(date) => String(Number(date.slice(8)))} tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: '#d7e0ec' }} />
+              <YAxis allowDecimals={false} width={compact ? 28 : 40} tick={compact ? { ...AXIS_TICK, fontSize: 10 } : AXIS_TICK} tickLine={false} axisLine={false} />
+              {activeStories.map((story) => {
+                const isDimmed = selectedStoryId && selectedStoryId !== story.id;
+                const isHovered = hoveredPoint?.storyId === story.id;
+                return <Line key={story.id} type="monotone" dataKey={story.id} name={story.title} stroke={isDimmed ? '#cbd5e1' : story.color} strokeWidth={selectedStoryId === story.id ? 4 : 3} dot={(dotProps) => <DailyProgressDot {...dotProps} story={story} isDimmed={isDimmed} isHovered={isHovered && hoveredPoint.point?.date === dotProps.payload?.date} onHover={setHoveredPoint} />} activeDot={false} connectNulls />;
+              })}
+            </LineChart>
+          </ResponsiveContainer>
+          {hoveredPoint && (() => {
+            const width = chartContainerRef.current?.clientWidth || 0;
+            const bubbleWidth = Math.min(360, Math.max(width - 24, 240));
+            const left = Math.max(bubbleWidth / 2 + 8, Math.min(hoveredPoint.x, width - bubbleWidth / 2 - 8));
+            const arrowX = Math.max(10, Math.min(hoveredPoint.x - left + bubbleWidth / 2, bubbleWidth - 10));
+            return <DailyProgressTooltip point={hoveredPoint.point} stories={activeStories} selectedStoryId={selectedStoryId} dailyProgress={dailyProgress} left={left} top={Math.max(12, hoveredPoint.y - 9)} width={bubbleWidth} arrowX={arrowX} />;
+          })()}
+        </div>
+      </>}
     </section>
   );
 }
 
-export default function StoryInsightsCharts({ stories, sessions = [] }) {
+export default function StoryInsightsCharts({ stories, sessions = [], dailyProgress = [] }) {
   const compact = useCompactCharts();
   const started = stories.reduce((sum, s) => sum + (Number(s.startedStudents) || 0), 0);
   const finished = stories.reduce((sum, s) => sum + (Number(s.finishedStudents) || 0), 0);
@@ -146,24 +205,9 @@ export default function StoryInsightsCharts({ stories, sessions = [] }) {
     color: meta.color,
   }));
 
-  const completionBars = stories.map((s, index) => ({
-    name: shortTitle(s.title),
-    fullTitle: s.title,
-    Pagkumpleto: s.hasData ? Number(s.successRate) || 0 : 0,
-    fill: CHART_COLORS[index % CHART_COLORS.length],
-  }));
-
-  const attemptBars = stories
-    .filter((s) => s.averageAttemptsPerScene !== null && s.averageAttemptsPerScene !== undefined)
-    .map((s, index) => ({
-      name: shortTitle(s.title),
-      fullTitle: s.title,
-      Pagsubok: Number(s.averageAttemptsPerScene) || 0,
-      fill: CHART_COLORS[index % CHART_COLORS.length],
-    }));
-
   return (
     <div className="stack">
+      <DailyProgressChart stories={stories} dailyProgress={dailyProgress} compact={compact} />
       <div className="insight-grid">
         <Donut
           title="Pagkumpleto ng mga kuwento"
@@ -181,28 +225,6 @@ export default function StoryInsightsCharts({ stories, sessions = [] }) {
           centerValue={sessions.length}
           centerLabel="sesyon"
           emptyText="Wala pang sesyon sa kuwento."
-          compact={compact}
-        />
-      </div>
-      <div className="insight-grid">
-        <HorizontalBars
-          title="Pagkumpleto bawat kuwento"
-          subtitle="Porsyento ng mga mag-aaral na nakatapos."
-          data={completionBars}
-          dataKey="Pagkumpleto"
-          name="Pagkumpleto"
-          suffix="%"
-          domain={[0, 100]}
-          emptyText="Wala pang datos."
-          compact={compact}
-        />
-        <HorizontalBars
-          title="Karaniwang pagsubok bawat eksena"
-          subtitle="Mas mataas na numero, mas mahirap ang kuwento."
-          data={attemptBars}
-          dataKey="Pagsubok"
-          name="Pagsubok"
-          emptyText="Wala pang mag-aaral na nakapasa sa mga eksena."
           compact={compact}
         />
       </div>

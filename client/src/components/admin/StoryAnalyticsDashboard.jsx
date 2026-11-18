@@ -10,6 +10,8 @@ const ICONS = {
   repeat: <><path d="M17 3l3 3-3 3" /><path d="M4 11V9a3 3 0 0 1 3-3h13" /><path d="M7 21l-3-3 3-3" /><path d="M20 13v2a3 3 0 0 1-3 3H4" /></>,
   smile: <><circle cx="12" cy="12" r="9" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><path d="M9 9h.01M15 9h.01" /></>,
   flag: <><path d="M5 21V4" /><path d="M5 4h11l-2 4 2 4H5" /></>,
+  book: <><path d="M12 7v14" /><path d="M3 5.5A2.5 2.5 0 0 1 5.5 3H12v18H5.5A2.5 2.5 0 0 0 3 23z" /><path d="M21 5.5A2.5 2.5 0 0 0 18.5 3H12v18h6.5A2.5 2.5 0 0 1 21 23z" /></>,
+  bars: <><path d="M4 20v-6" /><path d="M10 20V9" /><path d="M16 20V4" /><path d="M22 20v-9" /></>,
 };
 
 function Icon({ name }) {
@@ -20,15 +22,18 @@ function Icon({ name }) {
   );
 }
 
-function SummaryCard({ label, value, hint, accent, icon, text }) {
+function SummaryCard({ label, value, hint, accent, icon, text, trend }) {
   return (
     <article className="analytics-summary-card" style={{ '--summary-accent': accent }}>
-      <div className="analytics-summary-top">
+      <span className="analytics-summary-icon"><Icon name={icon} /></span>
+      <div className="analytics-summary-content">
         <span className="analytics-summary-label">{label}</span>
-        <span className="analytics-summary-icon"><Icon name={icon} /></span>
+        <strong className={text ? 'analytics-summary-value analytics-summary-value-text' : 'analytics-summary-value'}>{value}</strong>
+        {trend ? <div className="analytics-summary-foot">
+          <span className={`analytics-summary-trend is-${trend.direction}`}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg>{trend.value}</span>
+          {hint && <small>{hint}</small>}
+        </div> : hint && <small>{hint}</small>}
       </div>
-      <strong className={text ? 'analytics-summary-value analytics-summary-value-text' : 'analytics-summary-value'}>{value}</strong>
-      {hint && <small>{hint}</small>}
     </article>
   );
 }
@@ -67,7 +72,7 @@ function EmptyStories() {
   );
 }
 
-export default function StoryAnalyticsDashboard({ analytics, sessions = [] }) {
+export default function StoryAnalyticsDashboard({ analytics, sessions = [], monthlyStats }) {
   const [selectedStoryId, setSelectedStoryId] = useState(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const stories = analytics.stories.map((story, index) => ({ ...story, color: STORY_COLORS[index % STORY_COLORS.length] }));
@@ -77,11 +82,10 @@ export default function StoryAnalyticsDashboard({ analytics, sessions = [] }) {
   return (
     <div className="story-analytics stack">
       <section className="analytics-summary-grid" aria-label="Overall story statistics">
-        <SummaryCard icon="users" label="Kabuuang mag-aaral" value={summary.totalStudents} hint="mga account ng mag-aaral na nakarehistro" accent="#2563eb" />
-        <SummaryCard icon="check" label="Kabuuang pagkumpleto" value={`${summary.completionRate}%`} hint="mga pares ng mag-aaral at kuwentong nasimulan at natapos" accent="#2563eb" />
-        <SummaryCard icon="repeat" label="Karaniwang pagsubok bawat eksena" value={summary.averageAttemptsPerScene ?? '—'} hint={summary.averageAttemptsPerScene === null ? 'Wala pang naitalang nakapasa' : 'sa mga mag-aaral na nakapasa'} accent="#2563eb" />
-        <SummaryCard text icon="smile" label="Pinakamadaling kuwento" value={summary.easiestStory?.title || 'Kulang ang datos'} hint={summary.easiestStory ? `${summary.easiestStory.averageAttemptsPerScene} pagsubok bawat napagtagumpayang eksena` : 'Kailangang may mag-aaral munang makapasa sa mga eksena'} accent="#2563eb" />
-        <SummaryCard text icon="flag" label="Pinakamahirap na kuwento" value={summary.hardestStory?.title || 'Kulang ang datos'} hint={summary.hardestStory ? `${summary.hardestStory.averageAttemptsPerScene} pagsubok bawat napagtagumpayang eksena` : 'Kailangang may mag-aaral munang makapasa sa mga eksena'} accent="#2563eb" />
+        <SummaryCard icon="users" label="Kabuuang mag-aaral" value={summary.totalStudents} hint="kumpara sa nakaraang buwan" trend={{ value: monthlyStats?.studentsAddedThisMonth ?? 0, direction: monthlyStats?.studentsAddedThisMonth > 0 ? 'up' : 'flat' }} accent="#2563eb" />
+        <SummaryCard icon="check" label="Pagkumpleto" value={`${monthlyStats?.currentMonthCompletionRate ?? summary.completionRate}%`} hint="kumpara sa nakaraang buwan" trend={monthlyStats?.completionRateChange === null || monthlyStats?.completionRateChange === undefined ? null : { value: `${Math.abs(monthlyStats.completionRateChange)}%`, direction: monthlyStats.completionRateChange > 0 ? 'up' : monthlyStats.completionRateChange < 0 ? 'down' : 'flat' }} accent="#2563eb" />
+        <SummaryCard text icon="smile" label="Pinakamadaling kuwento" value={summary.easiestStory?.title || 'Kulang ang datos'} hint={summary.easiestStory ? `${summary.easiestStory.averageAttemptsPerScene} karaniwang pagsubok bawat eksena` : 'Wala pang sapat na datos ng pagsubok'} accent="#2563eb" />
+        <SummaryCard text icon="flag" label="Pinakamahirap na kuwento" value={summary.hardestStory?.title || 'Kulang ang datos'} hint={summary.hardestStory ? `${summary.hardestStory.averageAttemptsPerScene} karaniwang pagsubok bawat eksena` : 'Wala pang sapat na datos ng pagsubok'} accent="#2563eb" />
       </section>
 
       {stories.length === 0 ? <EmptyStories /> : <>
@@ -105,7 +109,7 @@ export default function StoryAnalyticsDashboard({ analytics, sessions = [] }) {
           <div className="analytics-flip-stage">
             <div className="analytics-flip-card">
               <div className="analytics-flip-face analytics-flip-front" aria-hidden={showAnalysis}>
-                <StoryInsightsCharts stories={stories} sessions={sessions} />
+                <StoryInsightsCharts stories={stories} sessions={sessions} dailyProgress={analytics.dailyProgress || []} />
               </div>
               <div className="analytics-flip-face analytics-flip-back" aria-hidden={!showAnalysis}>
                 <div className="analytics-section-heading">

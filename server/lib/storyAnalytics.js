@@ -234,6 +234,45 @@ export function buildStoryAnalytics({ stories, sessions, choiceLogs, versions, t
   const easiestStory = [...storiesWithAttempts].sort((a, b) => a.averageAttemptsPerScene - b.averageAttemptsPerScene)[0] ?? null;
   const hardestStory = [...storiesWithAttempts].sort((a, b) => b.averageAttemptsPerScene - a.averageAttemptsPerScene)[0] ?? null;
 
+  const dailyProgressStudents = new Map();
+  for (const log of choiceLogs) {
+    if (!log.selected_at || !log.student_id || !log.story_id) continue;
+    const date = new Date(log.selected_at).toISOString().slice(0, 10);
+    const key = `${date}:${log.story_id}`;
+    if (!dailyProgressStudents.has(key)) dailyProgressStudents.set(key, { date, storyId: log.story_id, students: new Map() });
+    const dailyStory = dailyProgressStudents.get(key);
+    if (!dailyStory.students.has(log.student_id)) dailyStory.students.set(log.student_id, { hasProgress: false, scenes: new Map() });
+    const student = dailyStory.students.get(log.student_id);
+    if (log.is_correct) student.hasProgress = true;
+    if (!log.scene_id) continue;
+    if (!student.scenes.has(log.scene_id)) student.scenes.set(log.scene_id, { attempts: 0, mistakes: 0, correct: false });
+    const scene = student.scenes.get(log.scene_id);
+    scene.attempts += 1;
+    if (log.is_correct) scene.correct = true;
+    else scene.mistakes += 1;
+  }
+  const dailyProgress = [...dailyProgressStudents.values()]
+    .map(({ date, storyId, students }) => {
+      const progressingStudents = [...students.values()].filter((student) => student.hasProgress);
+      const studentsWithScenes = progressingStudents.filter((student) => student.scenes.size > 0);
+      const averages = studentsWithScenes.length ? studentsWithScenes.reduce((sum, student) => {
+        const scenes = [...student.scenes.values()];
+        sum.correctScenes += scenes.filter((scene) => scene.correct).length;
+        sum.totalAttempts += scenes.reduce((count, scene) => count + scene.attempts, 0);
+        sum.totalMistakes += scenes.reduce((count, scene) => count + scene.mistakes, 0);
+        return sum;
+      }, { correctScenes: 0, totalAttempts: 0, totalMistakes: 0 }) : null;
+      return {
+        date,
+        storyId,
+        students: progressingStudents.length,
+        averageCorrectScenes: averages ? round1(averages.correctScenes / studentsWithScenes.length) : null,
+        totalAttempts: averages?.totalAttempts ?? null,
+        totalMistakes: averages?.totalMistakes ?? null,
+      };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+
   return {
     summary: {
       totalStudents,
@@ -243,5 +282,6 @@ export function buildStoryAnalytics({ stories, sessions, choiceLogs, versions, t
       hardestStory: hardestStory ? { id: hardestStory.id, title: hardestStory.title, averageAttemptsPerScene: hardestStory.averageAttemptsPerScene } : null,
     },
     stories: storiesWithStats,
+    dailyProgress,
   };
 }

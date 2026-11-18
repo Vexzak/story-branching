@@ -170,7 +170,8 @@ function AppShell({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [pendingPasswordResets, setPendingPasswordResets] = useState(0);
-  const showTopbar = profile?.role === 'admin' || location.pathname === '/home';
+  const isAdmin = profile?.role === 'admin';
+  const showTopbar = isAdmin || location.pathname === '/home';
 
   useEffect(() => {
     if (profile?.role !== 'admin') {
@@ -211,26 +212,31 @@ function AppShell({ children }) {
   }
 
   return (
-    <div className={profile?.role === 'admin' ? 'app-shell' : 'app-shell kids-theme'}>
-      {showTopbar && <header className="topbar">
+    <div className={isAdmin ? 'app-shell admin-shell' : 'app-shell kids-theme'}>
+      {isAdmin && <aside className="admin-sidebar">
+        <Link to="/admin" className="admin-brand">
+          <svg className="admin-brand-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M4 6.5C8.7 4.6 12.7 5.2 16 7v20c-3.3-1.8-7.3-2.4-12-0.5v-20Z" fill="currentColor"/><path d="M28 6.5C23.3 4.6 19.3 5.2 16 7v20c3.3-1.8 7.3-2.4 12-.5v-20Z" fill="currentColor"/></svg>
+          <span><strong>Kuwento</strong><small>Para sa Mas Magandang<br />Pagkatuto</small></span>
+        </Link>
+        <nav className="admin-side-nav" aria-label="Pangunahing nabigasyon">
+          <NavLink to="/admin" end><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z" /></svg>Dashboard</NavLink>
+          <NavLink to="/admin/students"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>Mga mag-aaral</NavLink>
+          <NavLink to="/admin/stories"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14M3 5.5A2.5 2.5 0 0 1 5.5 3H12v18H5.5A2.5 2.5 0 0 0 3 23V5.5ZM21 5.5A2.5 2.5 0 0 0 18.5 3H12v18h6.5A2.5 2.5 0 0 1 21 23V5.5Z" /></svg>Mga kuwento</NavLink>
+          {profile?.can_manage_admins && <NavLink to="/admin/accounts"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg>Mga account</NavLink>}
+          <PasswordResetBell count={pendingPasswordResets} />
+        </nav>
+        <div className="admin-sidebar-bottom">
+          <span className="admin-user-avatar">{(profile?.username || 'G').charAt(0).toUpperCase()}</span>
+          <span className="admin-user-name"><strong>{profile?.display_name || profile?.username}</strong><small>Guro</small></span>
+          <button type="button" onClick={handleSignOut} aria-label="Mag-sign out" title="Mag-sign out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/></svg></button>
+        </div>
+      </aside>}
+      {showTopbar && !isAdmin && <header className="topbar">
         <Link to={profile?.role === 'admin' ? '/admin' : '/home'} className="brand">
            ISIP-SANGAY
         </Link>
         <nav className="topbar-nav">
-          {profile?.role === 'admin' ? (
-            <>
-              <NavLink to="/admin" end>Dashboard ng Admin</NavLink>
-              <NavLink
-                to="/admin/students"
-                className="nav-students-link"
-              >
-                Students
-              </NavLink>
-              <NavLink to="/admin/stories">Mga Kuwento</NavLink>
-              {profile?.can_manage_admins && <NavLink to="/admin/accounts">Mga account ng admin</NavLink>}
-              <PasswordResetBell count={pendingPasswordResets} />
-            </>
-          ) : (
+          {(
             <NavLink to="/home">Mga Kuwento</NavLink>
           )}
           <span className="username-chip" title="Signed in as">
@@ -241,7 +247,12 @@ function AppShell({ children }) {
           </button>
         </nav>
       </header>}
-      <main className="page">{children}</main>
+      {isAdmin && <header className="admin-topbar">
+        <div className="admin-breadcrumb"><span>Dashboard</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg><strong>{location.pathname === '/admin' ? 'Datos ng mga kuwento' : location.pathname.includes('students') ? 'Mga mag-aaral' : location.pathname.includes('stories') ? 'Mga kuwento' : 'Mga account'}</strong></div>
+        <span className="admin-topbar-spacer" />
+        {location.pathname === '/admin' && <Link className="admin-manage-button" to="/admin/stories"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Pamahalaan ang mga kuwento</Link>}
+      </header>}
+      <main className={isAdmin ? `page admin-page${location.pathname === '/admin' ? ' admin-dashboard-page' : ''}` : 'page'}>{children}</main>
     </div>
   );
 }

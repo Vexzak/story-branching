@@ -3,7 +3,29 @@ export function isInstalledApp() {
 }
 
 export async function lockLandscape() {
-  if (!screen.orientation?.lock) return false;
-  await screen.orientation.lock('landscape');
-  return true;
+  if (typeof screen === 'undefined') return false;
+
+  if (screen.orientation?.lock) {
+    try {
+      await screen.orientation.lock('landscape-primary');
+      return true;
+    } catch {
+      try {
+        await screen.orientation.lock('landscape');
+        return true;
+      } catch {
+        // Try older browser implementations below before reporting unsupported.
+      }
+    }
+  }
+
+  const legacyLock = screen.lockOrientation || screen.mozLockOrientation || screen.msLockOrientation;
+  if (legacyLock) {
+    return Boolean(
+      legacyLock.call(screen, 'landscape-primary')
+      || legacyLock.call(screen, 'landscape')
+    );
+  }
+
+  return false;
 }

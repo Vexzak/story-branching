@@ -174,12 +174,14 @@ export default function AssetBootstrap() {
     requestLock();
     window.addEventListener('pageshow', requestLock);
     document.addEventListener('visibilitychange', requestLock);
+    screen.orientation?.addEventListener('change', requestLock);
     window.addEventListener('pointerdown', requestLock, true);
     window.addEventListener('keydown', requestLock, true);
     return () => {
       active = false;
       window.removeEventListener('pageshow', requestLock);
       document.removeEventListener('visibilitychange', requestLock);
+      screen.orientation?.removeEventListener('change', requestLock);
       window.removeEventListener('pointerdown', requestLock, true);
       window.removeEventListener('keydown', requestLock, true);
     };
