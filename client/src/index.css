@@ -4322,9 +4322,10 @@ body:has(.kids-home) {
 .admin-side-nav > a:hover { background: #f3f7ff; color: #175cc9; }
 .admin-side-nav > a[aria-current='page'] { background: #eaf2ff; color: #1459c5; font-weight: 700; }
 .admin-sidebar-bottom button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.admin-side-nav .nav-password-reset-button { display: flex; align-items: center; justify-content: flex-start; gap: 14px; width: 100%; min-height: 46px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: #566174; font: inherit; font-size: 1rem; font-weight: 550; cursor: pointer; }
+.admin-side-nav .nav-password-reset-button { position: relative; display: flex; align-items: center; justify-content: flex-start; gap: 14px; width: 100%; min-height: 46px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: #566174; font: inherit; font-size: 1rem; font-weight: 550; cursor: pointer; }
 .admin-side-nav .nav-password-reset-button::after { content: 'Mga kahilingan'; font: inherit; }
 .admin-side-nav .nav-password-reset-button:hover { background: #f3f7ff; }
+.admin-side-nav .nav-password-reset-count { top: 3px; right: 12px; }
 .admin-sidebar-bottom { display: flex; align-items: center; gap: 10px; margin-top: auto; padding: 16px 8px 0; border-top: 1px solid #edf0f5; }
 .admin-user-avatar { display: grid; width: 42px; height: 42px; flex: none; place-items: center; border-radius: 50%; background: #dceaff; color: #2164dc; font-weight: 750; }
 .admin-user-name { display: grid; min-width: 0; flex: 1; line-height: 1.3; }
