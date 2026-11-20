@@ -18,6 +18,7 @@ import adminAccountRoutes from './routes/adminAccounts.js';
 import { notFound, errorHandler } from './middleware/error.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const supabaseStorageOrigin = new URL(env.SUPABASE_URL).origin;
 
 const app = express();
 
@@ -25,8 +26,13 @@ app.set('trust proxy', 1);
 
 app.use(
   helmet({
-    // The built client is served from the same origin in production; allow its
-    // images/fonts to load from Supabase Storage.
+    contentSecurityPolicy: {
+      directives: {
+        imgSrc: ["'self'", 'data:', supabaseStorageOrigin],
+        mediaSrc: ["'self'", supabaseStorageOrigin],
+      },
+    },
+    // Allow public story images and audio to load from Supabase Storage.
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 );

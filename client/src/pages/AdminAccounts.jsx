@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '../api';
 import { useAuth } from '../App';
+import PasswordInput from '../components/PasswordInput';
 
 const emptyForm = { email: '', username: '', displayName: '', password: '', canManageAdmins: false };
 
@@ -79,7 +80,7 @@ export default function AdminAccounts() {
           </label>
           <label className="field">
             <span>Panimulang password (hindi bababa sa 12 character)</span>
-            <input className="input" type="password" autoComplete="new-password" required minLength={12} maxLength={72} value={form.password} onChange={(e) => setForm((v) => ({ ...v, password: e.target.value }))} />
+            <PasswordInput className="input" autoComplete="new-password" required minLength={12} maxLength={72} value={form.password} onChange={(e) => setForm((v) => ({ ...v, password: e.target.value }))} />
           </label>
           <label className="field" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <input type="checkbox" checked={form.canManageAdmins} onChange={(e) => setForm((v) => ({ ...v, canManageAdmins: e.target.checked }))} />

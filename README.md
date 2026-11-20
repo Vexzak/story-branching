@@ -100,6 +100,10 @@ All schema lives in `database/schema.sql`. To apply it:
 
 If the database was set up before this recovery flow was added, run
 `database/migrations/20261109_password_reset_tracking.sql` in the SQL Editor.
+If the database was set up before story privacy controls were added, also run
+`database/migrations/20261119_story_privacy.sql` in the SQL Editor.
+For whole-story background music, also run
+`database/migrations/20261120_story_background_music.sql` in the SQL Editor.
 For offline gameplay progress syncing, also run
 `database/migrations/20261111_offline_choice_sync.sql` in the SQL Editor.
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { apiFetch } from '../api';
+import PasswordInput from '../components/PasswordInput';
 
 const USERNAME_PATTERN = /^[A-Za-z0-9_.-]+$/;
 
@@ -127,8 +128,7 @@ export default function Signup() {
 
           <label className="field">
             <span>Password</span>
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="new-password"
               value={form.password}
               onChange={(e) => update('password', e.target.value)}
@@ -139,8 +139,7 @@ export default function Signup() {
 
           <label className="field">
             <span>Kumpirmahin ang password</span>
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="new-password"
               value={form.confirmPassword}
               onChange={(e) => update('confirmPassword', e.target.value)}

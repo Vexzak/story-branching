@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { apiFetch } from '../api';
 import { useAuth } from '../App';
+import PasswordInput from '../components/PasswordInput';
 
 const recoveryNotices = {
   pending: { tone: 'alert-warn', text: 'Naghihintay ang kahilingan mong magpalit ng password na masuri ng admin.' },
@@ -111,8 +112,7 @@ export default function Login() {
 
           <label className="field">
             <span>Password</span>
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="current-password"
               required
               value={password}

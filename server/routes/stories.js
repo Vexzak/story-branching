@@ -13,8 +13,9 @@ router.get('/assets', async (_req, res, next) => {
   try {
     const { data: stories, error: storiesError } = await supabaseAdmin
       .from('stories')
-      .select('published_version_id, cover_image_path')
+      .select('published_version_id, cover_image_path, background_music_path')
       .eq('status', 'published')
+      .eq('is_private', false)
       .not('published_version_id', 'is', null);
     if (storiesError) throw storiesError;
 
@@ -31,7 +32,10 @@ router.get('/assets', async (_req, res, next) => {
       assets.add(value);
     };
 
-    for (const story of stories ?? []) addAsset(story.cover_image_path);
+    for (const story of stories ?? []) {
+      addAsset(story.cover_image_path);
+      addAsset(story.background_music_path);
+    }
     for (const version of versions.data ?? []) {
       for (const scene of Object.values(version.content?.scenes ?? {})) {
         addAsset(scene.background_image_path);
@@ -57,7 +61,7 @@ router.get('/offline-pack', async (req, res, next) => {
     if (req.profile.role !== 'student') throw new HttpError(403, 'Only students can download story packs.');
     const { data: stories, error } = await supabaseAdmin
       .from('stories')
-      .select('id, title, description, cover_image_path, sequence_order, unlock_after_previous, published_version_id')
+      .select('id, title, description, cover_image_path, background_music_path, sequence_order, unlock_after_previous, is_private, published_version_id')
       .eq('status', 'published')
       .order('sequence_order', { ascending: true })
       .order('created_at', { ascending: true });
@@ -72,7 +76,7 @@ router.get('/offline-pack', async (req, res, next) => {
     let previousStory = null;
     const studentStories = (stories ?? []).map((story) => {
       const completed = completedIds.has(story.id);
-      const unlocked = completed || !previousStory || !story.unlock_after_previous || completedIds.has(previousStory.id);
+      const unlocked = !story.is_private && (completed || !previousStory || !story.unlock_after_previous || completedIds.has(previousStory.id));
       previousStory = story;
       return { ...story, completed, unlocked };
     });
@@ -85,7 +89,7 @@ router.get('/offline-pack', async (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     res.json({ stories: studentStories.map((story) => ({
       ...story,
-      content: contents.get(story.published_version_id) ?? null,
+      content: story.is_private ? null : contents.get(story.published_version_id) ?? null,
     })) });
   } catch (err) {
     next(err);
@@ -100,7 +104,7 @@ router.get('/', async (req, res, next) => {
   try {
     let query = supabaseAdmin
       .from('stories')
-      .select('id, title, description, cover_image_path, status, sequence_order, unlock_after_previous, created_at, updated_at')
+      .select('id, title, description, cover_image_path, background_music_path, status, sequence_order, unlock_after_previous, is_private, created_at, updated_at')
       .order('sequence_order', { ascending: true })
       .order('created_at', { ascending: true });
 
@@ -127,7 +131,7 @@ router.get('/', async (req, res, next) => {
     let previousStory = null;
     const studentStories = stories.map((story) => {
       const completed = completedIds.has(story.id);
-      const unlocked = completed || !previousStory || !story.unlock_after_previous || completedIds.has(previousStory.id);
+      const unlocked = !story.is_private && (completed || !previousStory || !story.unlock_after_previous || completedIds.has(previousStory.id));
       previousStory = story;
       return { ...story, completed, unlocked };
     });
@@ -149,12 +153,16 @@ router.get('/:storyId', async (req, res, next) => {
 
     const { data: story, error } = await supabaseAdmin
       .from('stories')
-      .select('id, title, description, cover_image_path, status, published_version_id')
+      .select('id, title, description, cover_image_path, background_music_path, status, is_private, published_version_id')
       .eq('id', storyId)
       .maybeSingle();
 
     if (error) throw error;
     if (!story) throw new HttpError(404, 'Story not found.');
+
+    if (story.is_private && req.profile.role === 'student') {
+      throw new HttpError(403, 'Hindi pa pinahihintulutan ng admin ang kuwentong ito.');
+    }
 
     if (story.status !== 'published' && req.profile.role !== 'admin') {
       throw new HttpError(404, 'Story not found.');

@@ -62,10 +62,12 @@ create table if not exists public.stories (
   full_story_text      text not null default '',
   description          text not null default '',
   cover_image_path     text,
+  background_music_path text,
   status               text not null default 'draft'
                          check (status in ('draft', 'published', 'archived')),
   sequence_order      integer not null default 0,
   unlock_after_previous boolean not null default true,
+  is_private         boolean not null default false,
   starting_scene_id    uuid,
   published_version_id uuid,
   created_by           uuid references public.profiles(id) on delete set null,

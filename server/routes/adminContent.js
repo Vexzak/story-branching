@@ -60,7 +60,7 @@ router.get('/stories', async (req, res, next) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('stories')
-      .select('id, title, description, cover_image_path, status, sequence_order, unlock_after_previous, starting_scene_id, published_version_id, updated_at')
+      .select('id, title, description, cover_image_path, background_music_path, status, sequence_order, unlock_after_previous, is_private, starting_scene_id, published_version_id, updated_at')
       .order('sequence_order', { ascending: true })
       .order('created_at', { ascending: true });
     if (error) throw error;
@@ -150,7 +150,7 @@ router.get('/stories/:storyId', async (req, res, next) => {
 
     const { data: story, error } = await supabaseAdmin
       .from('stories')
-      .select('id, title, author, full_story_text, description, cover_image_path, status, starting_scene_id, published_version_id')
+      .select('id, title, author, full_story_text, description, cover_image_path, background_music_path, status, is_private, starting_scene_id, published_version_id')
       .eq('id', storyId)
       .maybeSingle();
     if (error) throw error;
@@ -189,6 +189,10 @@ router.patch('/stories/:storyId', async (req, res, next) => {
     if (has(body, 'author')) patch.author = text(body.author, 'Author', { max: 160 });
     if (has(body, 'full_story_text')) patch.full_story_text = text(body.full_story_text, 'Full story text', { max: 50000 });
     if (has(body, 'description')) patch.description = text(body.description, 'Description', { max: 1000 });
+    if (has(body, 'is_private')) {
+      if (typeof body.is_private !== 'boolean') throw new HttpError(400, 'Invalid story privacy setting.');
+      patch.is_private = body.is_private;
+    }
     if (has(body, 'starting_scene_id')) {
       patch.starting_scene_id = body.starting_scene_id
         ? await sceneInStory(body.starting_scene_id, storyId)
@@ -200,10 +204,15 @@ router.patch('/stories/:storyId', async (req, res, next) => {
       .from('stories')
       .update(patch)
       .eq('id', storyId)
-      .select('id, title, author, full_story_text, description, status, starting_scene_id')
+      .select('id, title, author, full_story_text, description, status, is_private, starting_scene_id')
       .maybeSingle();
     if (error) throw error;
     if (!data) throw new HttpError(404, 'Story not found.');
+    if (has(body, 'is_private')) {
+      await audit(req.profile.id, data.is_private ? 'story.privatize' : 'story.make_public', 'story', storyId, {
+        is_private: data.is_private,
+      });
+    }
     res.json({ story: data });
   } catch (err) {
     next(err);
@@ -706,6 +715,58 @@ router.delete('/stories/:storyId/audio', async (req, res, next) => {
     const { error } = await supabaseAdmin.from('scenes').update({ sound_effect_path: null }).eq('id', sceneId);
     if (error) throw error;
     await audit(req.profile.id, 'audio.remove', 'scene', sceneId, {});
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Whole-story background music. The story row stores the public MP3 URL.
+router.post('/stories/:storyId/music', express.raw({ type: ['audio/mpeg', 'audio/mp3', 'application/octet-stream'], limit: MAX_AUDIO_BYTES }), async (req, res, next) => {
+  try {
+    const { storyId } = req.params;
+    assertUuid(storyId, 'story id');
+    const mime = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const body = req.body;
+    if (!Buffer.isBuffer(body) || body.length < 4) throw new HttpError(400, 'No audio received.');
+    if (!['audio/mpeg', 'audio/mp3', 'application/octet-stream'].includes(mime)) {
+      throw new HttpError(415, 'Choose an MP3 audio file.');
+    }
+    const hasId3 = body.subarray(0, 3).toString('ascii') === 'ID3';
+    const hasFrame = body[0] === 0xff && (body[1] & 0xe0) === 0xe0;
+    if (!hasId3 && !hasFrame) throw new HttpError(400, 'That file is not a valid MP3.');
+
+    const path = `${storyId}/story-music-${randomUUID()}.mp3`;
+    const { error: uploadError } = await supabaseAdmin.storage.from(BUCKET)
+      .upload(path, body, { contentType: 'audio/mpeg', upsert: false, cacheControl: '31536000' });
+    if (uploadError) throw uploadError;
+    const url = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+    const { data, error } = await supabaseAdmin.from('stories')
+      .update({ background_music_path: url })
+      .eq('id', storyId)
+      .select('id')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new HttpError(404, 'Story not found.');
+    await audit(req.profile.id, 'story.music.upload', 'story', storyId, { path });
+    res.status(201).json({ url });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/stories/:storyId/music', async (req, res, next) => {
+  try {
+    const { storyId } = req.params;
+    assertUuid(storyId, 'story id');
+    const { data, error } = await supabaseAdmin.from('stories')
+      .update({ background_music_path: null })
+      .eq('id', storyId)
+      .select('id')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new HttpError(404, 'Story not found.');
+    await audit(req.profile.id, 'story.music.remove', 'story', storyId, {});
     res.json({ ok: true });
   } catch (err) {
     next(err);

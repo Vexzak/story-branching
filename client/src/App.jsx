@@ -279,14 +279,15 @@ function HomeRedirect() {
 export default function App() {
   const location = useLocation();
   const isPlayingStory = location.pathname.startsWith('/play/');
+  const isAdminPage = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
 
   useEffect(() => {
     initializeBackgroundMusic();
   }, []);
 
   useEffect(() => {
-    setBackgroundMusicEnabled(!isPlayingStory);
-  }, [isPlayingStory]);
+    setBackgroundMusicEnabled(!isPlayingStory && !isAdminPage);
+  }, [isPlayingStory, isAdminPage]);
 
   return (
     <AuthProvider>

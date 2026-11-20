@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { apiFetch } from '../api';
+import PasswordInput from '../components/PasswordInput';
 
 export default function NewPassword() {
   const navigate = useNavigate();
@@ -59,8 +60,8 @@ export default function NewPassword() {
           <p className="auth-subtitle">Pumili ng password na may hindi bababa sa 8 character.</p>
           {error && <div className="alert alert-error">{error}</div>}
           <form onSubmit={handleSubmit} className="form">
-            <label className="field"><span>Bagong password</span><input type="password" autoComplete="new-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
-            <label className="field"><span>Kumpirmahin ang bagong password</span><input type="password" autoComplete="new-password" required value={confirm} onChange={(event) => setConfirm(event.target.value)} /></label>
+            <label className="field"><span>Bagong password</span><PasswordInput autoComplete="new-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+            <label className="field"><span>Kumpirmahin ang bagong password</span><PasswordInput autoComplete="new-password" required value={confirm} onChange={(event) => setConfirm(event.target.value)} /></label>
             <button className="btn btn-primary btn-block" type="submit" disabled={busy}>{busy ? 'Saving…' : 'I-save ang bagong password'}</button>
           </form>
         </>}

@@ -97,12 +97,14 @@ async function findActive(studentId, storyId) {
 async function assertStoryUnlocked(studentId, storyId) {
   const { data: sequence, error: sequenceError } = await supabaseAdmin
     .from('stories')
-    .select('id, unlock_after_previous')
+    .select('id, unlock_after_previous, is_private')
     .eq('status', 'published')
     .order('sequence_order', { ascending: true })
     .order('created_at', { ascending: true });
   if (sequenceError) throw sequenceError;
   const index = (sequence ?? []).findIndex((story) => story.id === storyId);
+  if (index < 0) throw new HttpError(404, 'Story not found.');
+  if (sequence[index].is_private) throw new HttpError(403, 'Hindi pa pinahihintulutan ng admin ang kuwentong ito.');
   if (index <= 0 || !sequence[index].unlock_after_previous) return;
 
   const previousStoryId = sequence[index - 1].id;
@@ -117,7 +119,24 @@ async function assertStoryUnlocked(studentId, storyId) {
   if (!completed?.length) throw new HttpError(403, 'Complete the previous story to unlock this one.');
 }
 
-function sessionPayload(session, content) {
+async function assertStoryNotPrivate(storyId) {
+  const { data: story, error } = await supabaseAdmin
+    .from('stories')
+    .select('is_private')
+    .eq('id', storyId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!story) throw new HttpError(404, 'Story not found.');
+  if (story.is_private) throw new HttpError(403, 'Hindi pa pinahihintulutan ng admin ang kuwentong ito.');
+}
+
+async function sessionPayload(session, content) {
+  const { data: storySettings, error } = await supabaseAdmin
+    .from('stories')
+    .select('background_music_path')
+    .eq('id', session.story_id)
+    .maybeSingle();
+  if (error) throw error;
   return {
     session: {
       id: session.id,
@@ -131,6 +150,7 @@ function sessionPayload(session, content) {
       title: content.story?.title ?? '',
       author: content.story?.author ?? '',
       full_story_text: storyBookText(content),
+      background_music_path: storySettings?.background_music_path ?? null,
     },
     scene: publicScene(content, session.current_scene_id),
   };
@@ -143,13 +163,14 @@ router.get('/entry/:storyId', async (req, res, next) => {
     assertUuid(storyId, 'story id');
     const { data: story, error } = await supabaseAdmin
       .from('stories')
-      .select('id, status, published_version_id')
+      .select('id, status, is_private, published_version_id')
       .eq('id', storyId)
       .maybeSingle();
     if (error) throw error;
     if (!story || story.status !== 'published' || !story.published_version_id) {
       throw new HttpError(404, 'Story not found.');
     }
+    if (story.is_private) throw new HttpError(403, 'Hindi pa pinahihintulutan ng admin ang kuwentong ito.');
     await assertStoryUnlocked(req.profile.id, storyId);
 
     const publishedContent = await loadContent(story.published_version_id);
@@ -183,7 +204,7 @@ router.get('/entry/:storyId', async (req, res, next) => {
         full_story_text: storyBookText(publishedContent),
       },
       firstScene: publicScene(publishedContent, startId),
-      savedGame: saved && savedContent ? sessionPayload(saved, savedContent) : null,
+        savedGame: saved && savedContent ? await sessionPayload(saved, savedContent) : null,
       tutorialSeen: req.profile.book_tutorial_seen === true,
     });
   } catch (err) {
@@ -204,13 +225,14 @@ router.post('/', async (req, res, next) => {
 
     const { data: story, error: storyError } = await supabaseAdmin
       .from('stories')
-      .select('id, status, published_version_id')
+      .select('id, status, is_private, published_version_id')
       .eq('id', storyId)
       .maybeSingle();
     if (storyError) throw storyError;
     if (!story || story.status !== 'published' || !story.published_version_id) {
       throw new HttpError(404, 'Story not found.');
     }
+    if (story.is_private) throw new HttpError(403, 'Hindi pa pinahihintulutan ng admin ang kuwentong ito.');
 
     // Enforce progression even for a previously created incomplete session.
     await assertStoryUnlocked(studentId, storyId);
@@ -219,7 +241,7 @@ router.post('/', async (req, res, next) => {
       const existing = await findActive(studentId, storyId);
       if (existing) {
         const content = await loadContent(existing.story_version_id);
-        return res.json({ ...sessionPayload(existing, content), resumed: true });
+        return res.json({ ...(await sessionPayload(existing, content)), resumed: true });
       }
     }
 
@@ -256,13 +278,13 @@ router.post('/', async (req, res, next) => {
         const existing = await findActive(studentId, storyId);
         if (existing) {
           const c = await loadContent(existing.story_version_id);
-          return res.json({ ...sessionPayload(existing, c), resumed: true });
+          return res.json({ ...(await sessionPayload(existing, c)), resumed: true });
         }
       }
       throw insertError;
     }
 
-    res.status(201).json({ ...sessionPayload(created, content), resumed: false });
+    res.status(201).json({ ...(await sessionPayload(created, content)), resumed: false });
   } catch (err) {
     next(err);
   }
@@ -273,8 +295,9 @@ router.get('/:sessionId', async (req, res, next) => {
   try {
     assertUuid(req.params.sessionId, 'session id');
     const session = await loadOwnedSession(req.params.sessionId, req.profile.id);
+    await assertStoryNotPrivate(session.story_id);
     const content = await loadContent(session.story_version_id);
-    res.json(sessionPayload(session, content));
+    res.json(await sessionPayload(session, content));
   } catch (err) {
     next(err);
   }
@@ -294,6 +317,8 @@ router.post('/:sessionId/choices', async (req, res, next) => {
     const { choiceId, clientActionId, expectedSceneId } = req.body ?? {};
     assertUuid(sessionId, 'session id');
     assertUuid(choiceId, 'choice id');
+    const currentSession = await loadOwnedSession(sessionId, req.profile.id);
+    await assertStoryNotPrivate(currentSession.story_id);
 
     const rpcName = clientActionId ? 'submit_choice_idempotent' : 'submit_choice';
     if (clientActionId) {
@@ -330,7 +355,7 @@ router.post('/:sessionId/choices', async (req, res, next) => {
     const content = await loadContent(session.story_version_id);
 
     res.json({
-      ...sessionPayload(session, content),
+      ...(await sessionPayload(session, content)),
       result: {
         correct: result.correct,
         advanced: result.advanced,

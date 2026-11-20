@@ -180,6 +180,8 @@ textarea.ed-input { resize: vertical; line-height: 1.5; }
 .ed-story-sequence button:disabled { opacity: 0.35; cursor: default; }
 .ed-story-lock { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.94); color: var(--ed-ink); font-size: 0.72rem; line-height: 1.2; font-weight: 800; }
 .ed-story-lock input { margin: 0; flex: none; }
+.ed-story-private-status { display: inline-flex; align-items: center; gap: 4px; }
+.ed-story-private-icon { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .ed-story-open { width: 100%; margin-top: 4px; }
 .ed-story-sequence-bar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 12px; }
 
@@ -622,6 +624,24 @@ async function uploadSceneAudio(storyId, sceneId, file) {
   return payload.url;
 }
 
+async function uploadStoryMusic(storyId, file) {
+  if (file.type && !['audio/mpeg', 'audio/mp3', 'application/octet-stream'].includes(file.type)) {
+    throw new Error('Pumili ng MP3 audio file.');
+  }
+  if (!file.name.toLowerCase().endsWith('.mp3')) throw new Error('Pumili ng MP3 audio file.');
+  if (file.size > MAX_AUDIO_BYTES) throw new Error('That audio file is larger than 20 MB.');
+  const { data } = await supabase.auth.getSession();
+  const token = data?.session?.access_token;
+  const response = await fetch(`/api${BASE}/stories/${storyId}/music`, {
+    method: 'POST',
+    headers: { 'Content-Type': file.type || 'application/octet-stream', Authorization: `Bearer ${token}` },
+    body: file,
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(payload?.error || `Upload failed (${response.status})`);
+  return payload.url;
+}
+
 /* ------------------------------------------------------------------ */
 /* Notifications (top-right cards)                                     */
 /* ------------------------------------------------------------------ */
@@ -688,6 +708,7 @@ export default function StoryConfiguration() {
   const [stories, setStories] = useState([]);
   const [sequenceDraft, setSequenceDraft] = useState([]);
   const [sequenceSaving, setSequenceSaving] = useState(false);
+  const [privacySavingId, setPrivacySavingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState(null);
   const [newTitle, setNewTitle] = useState('');
@@ -731,6 +752,24 @@ export default function StoryConfiguration() {
       [next[index], next[target]] = [next[target], next[index]];
       return next;
     });
+  }
+
+  async function setStoryPrivacy(story, isPrivate) {
+    setPrivacySavingId(story.id);
+    try {
+      await apiFetch(`${BASE}/stories/${story.id}`, {
+        method: 'PATCH',
+        body: { is_private: isPrivate },
+      });
+      const updatePrivacy = (items) => items.map((item) => item.id === story.id ? { ...item, is_private: isPrivate } : item);
+      setStories(updatePrivacy);
+      setSequenceDraft(updatePrivacy);
+      pushToast('success', isPrivate ? 'Nakatakda na bilang pribado ang kuwento.' : 'Pampubliko na ulit ang kuwento.', 3500);
+    } catch (err) {
+      pushToast('error', err.message || 'Hindi nabago ang privacy ng kuwento.', 9000);
+    } finally {
+      setPrivacySavingId(null);
+    }
   }
 
   async function saveSequence() {
@@ -817,6 +856,24 @@ export default function StoryConfiguration() {
                       : item))}
                   />
                   <span>I-lock</span>
+                </label>
+                <label className="ed-story-lock ed-story-private" title={s.is_private ? 'Pribado: hindi ito malalaro ng mga mag-aaral' : 'Pampubliko: maaaring laruin ayon sa pagkakasunod-sunod'}>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    aria-label={`${s.is_private ? 'Gawing pampubliko' : 'Gawing pribado'}: ${s.title}`}
+                    checked={!!s.is_private}
+                    disabled={privacySavingId === s.id}
+                    onChange={(event) => setStoryPrivacy(s, event.target.checked)}
+                  />
+                  <span className="ed-story-private-status">
+                    {s.is_private ? (
+                      <svg className="ed-story-private-icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="7" width="9" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>
+                    ) : (
+                      <svg className="ed-story-private-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M1.9 8h12.2M8 1.75a9.8 9.8 0 0 1 0 12.5M8 1.75a9.8 9.8 0 0 0 0 12.5"/></svg>
+                    )}
+                    {s.is_private ? 'Pribado' : 'Pampubliko'}
+                  </span>
                 </label>
               </div>
             </div>
@@ -1178,6 +1235,19 @@ function StoryEditor({ storyId, onClose }) {
       await load();
     }, 'Cover picture removed.');
 
+  const addStoryMusic = (file) =>
+    file &&
+    act(async () => {
+      await uploadStoryMusic(storyId, file);
+      await load();
+    }, 'Naidagdag ang background music sa buong kuwento.');
+
+  const removeStoryMusic = () =>
+    act(async () => {
+      await apiFetch(`${BASE}/stories/${storyId}/music`, { method: 'DELETE' });
+      await load();
+    }, 'Inalis ang background music.');
+
   const uploadBackground = (file) =>
     file &&
     act(async () => {
@@ -1455,6 +1525,40 @@ function StoryEditor({ storyId, onClose }) {
                 )}
               </div>
               <p className="ed-hint">PNG, JPEG o WebP, hanggang 5 MB. Makikita agad ng mga mag-aaral ang pabalat.</p>
+            </div>
+          </div>
+
+          <div className="ed-field">
+            <span className="ed-label">Musika sa buong kuwento</span>
+            <div className="ed-media">
+              {story.background_music_path ? (
+                <audio controls preload="none" src={story.background_music_path} style={{ width: '100%' }}>
+                  Hindi masuportahan ng browser ang pag-play ng audio.
+                </audio>
+              ) : (
+                <div className="ed-media-empty">Wala pang background music</div>
+              )}
+              <div className="ed-row">
+                <label className={busy ? 'ed-btn ed-file ed-disabled' : 'ed-btn ed-file'}>
+                  {story.background_music_path ? 'Palitan ang MP3' : 'Magdagdag ng MP3'}
+                  <input
+                    type="file"
+                    accept=".mp3,audio/mpeg,audio/mp3"
+                    disabled={busy}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      event.target.value = '';
+                      addStoryMusic(file);
+                    }}
+                  />
+                </label>
+                {story.background_music_path && (
+                  <button type="button" className="ed-btn ed-btn-ghost" disabled={busy} onClick={removeStoryMusic}>
+                    Alisin
+                  </button>
+                )}
+              </div>
+              <p className="ed-hint">MP3 hanggang 20 MB. Umiikot habang nilalaro ang kuwento at hihinto kapag umalis ang mag-aaral sa pahina nito.</p>
             </div>
           </div>
 

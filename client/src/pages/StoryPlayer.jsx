@@ -114,7 +114,7 @@ function localGame(pack, storyId, progress = null, fallbackSceneId = null) {
       current_scene_id: scene.id,
       status: progress?.status || 'in_progress',
     },
-    story: content.story,
+    story: { ...content.story, background_music_path: savedStory.background_music_path ?? null },
     scene,
   };
 }
@@ -305,7 +305,9 @@ export default function StoryPlayer() {
   const choiceOrders = useRef(new Map());
   const syncingOfflineProgress = useRef(false);
   const audioRef = useRef(null);
+  const backgroundMusicRef = useRef(null);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [backgroundMusicBlocked, setBackgroundMusicBlocked] = useState(false);
 
   const orderChoices = useCallback((data) => {
     if (!data?.session?.id || !data.scene?.id || !Array.isArray(data.scene.choices)) return data;
@@ -530,6 +532,8 @@ export default function StoryPlayer() {
 
   const activeSceneId = game?.scene?.id;
   const activeAudioUrl = game?.scene?.sound_effect_path;
+  const activeBackgroundMusicUrl = game?.story?.background_music_path;
+  const shouldPlayBackgroundMusic = !!game;
   useEffect(() => {
     const audio = audioRef.current;
     setAudioBlocked(false);
@@ -548,6 +552,30 @@ export default function StoryPlayer() {
     };
   }, [activeSceneId, activeAudioUrl, loading, !!failure]);
 
+  useEffect(() => {
+    const audio = backgroundMusicRef.current;
+    setBackgroundMusicBlocked(false);
+    if (!audio) return undefined;
+    audio.pause();
+    audio.currentTime = 0;
+    if (!activeBackgroundMusicUrl || loading || !shouldPlayBackgroundMusic) {
+      audio.removeAttribute('src');
+      audio.load();
+      return undefined;
+    }
+    audio.src = activeBackgroundMusicUrl;
+    audio.loop = true;
+    audio.volume = 0.3;
+    audio.load();
+    audio.play().catch(() => setBackgroundMusicBlocked(true));
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.removeAttribute('src');
+      audio.load();
+    };
+  }, [activeBackgroundMusicUrl, loading, shouldPlayBackgroundMusic]);
+
   useEffect(() => () => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -559,6 +587,12 @@ export default function StoryPlayer() {
     const audio = audioRef.current;
     if (!audio || !activeAudioUrl) return;
     audio.play().then(() => setAudioBlocked(false)).catch(() => setAudioBlocked(true));
+  };
+
+  const enableBackgroundMusic = () => {
+    const audio = backgroundMusicRef.current;
+    if (!audio || !activeBackgroundMusicUrl) return;
+    audio.play().then(() => setBackgroundMusicBlocked(false)).catch(() => setBackgroundMusicBlocked(true));
   };
 
   async function choose(choiceId) {
@@ -755,6 +789,7 @@ export default function StoryPlayer() {
         style={failBg && !failHasArt ? { backgroundImage: `url("${failBg}")` } : undefined}
       >
         <audio ref={audioRef} preload="auto" aria-hidden="true" />
+        <audio ref={backgroundMusicRef} preload="none" loop aria-hidden="true" />
         <style>{ART_CSS}</style>
         <RotatePrompt />
         {failHasArt && <SceneArt key={`failure-${failure.scene?.id || scene?.id}`} bg={failBg} objects={failObjects} />}
@@ -764,6 +799,7 @@ export default function StoryPlayer() {
         </Link>
         <BookButton onClick={openBook} />
         <div className="vn-box vn-failure-panel vn-narration-panel">
+          {backgroundMusicBlocked && <button type="button" className="vn-choice vn-music-enable" onClick={enableBackgroundMusic}>Patugtugin ang background music</button>}
           <div className="vn-scene-header">
             <div className="vn-name">{failure.scene?.title || 'Not quite'}</div>
             <div className="vn-choices">
@@ -788,6 +824,7 @@ export default function StoryPlayer() {
       style={bg && !hasArt ? { backgroundImage: `url("${bg}")` } : undefined}
     >
       <audio ref={audioRef} preload="auto" aria-hidden="true" />
+      <audio ref={backgroundMusicRef} preload="none" loop aria-hidden="true" />
       <style>{ART_CSS}</style>
       <RotatePrompt />
       {hasArt && <SceneArt key={`scene-${scene?.id}`} bg={bg} objects={objects} />}
@@ -805,8 +842,9 @@ export default function StoryPlayer() {
       </Link>
 
       <BookButton onClick={openBook} />
-      <div className={`vn-box${scene?.narration ? ' vn-narration-panel' : ''}`}>
+      <div className={`vn-box${scene?.narration ? ' vn-narration-panel' : ''}${completed ? ' vn-completed-panel' : ''}`}>
         {error && <div className="alert alert-error">{error}</div>}
+        {backgroundMusicBlocked && <button type="button" className="vn-choice vn-music-enable" onClick={enableBackgroundMusic}>Patugtugin ang background music</button>}
 
         {completed ? (
           <div className="vn-choices vn-completed-content">
@@ -814,17 +852,17 @@ export default function StoryPlayer() {
             {note && <p className="vn-sub">{note}</p>}
             <div className="vn-scene-header">
               <div className="vn-name">{scene?.title}</div>
-              <div className="vn-complete-actions">
-                <button type="button" className="vn-choice" onClick={() => start(true)}>
-                  Laruin muli
-                </button>
-                <Link className="vn-choice" to="/home">
-                  Bumalik sa mga kuwento
-                </Link>
-              </div>
             </div>
             <p className="vn-text">{scene?.narration}</p>
             {scene?.dialogue && <p className="vn-text vn-dialogue">“{scene.dialogue}”</p>}
+            <div className="vn-complete-actions">
+              <button type="button" className="vn-choice" onClick={() => start(true)}>
+                Laruin muli
+              </button>
+              <Link className="vn-choice" to="/home">
+                Bumalik sa mga kuwento
+              </Link>
+            </div>
           </div>
         ) : showChoices ? (
           <div className="vn-choice-screen">

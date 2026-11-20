@@ -47,7 +47,7 @@ export default function StudentHome() {
       <div className="kids-shelf">
         {stories.map((story, index) => {
           const theme = BOOK_THEMES[index % BOOK_THEMES.length];
-          const locked = !story.unlocked;
+          const locked = story.is_private || !story.unlocked;
 
           return (
             <div
@@ -60,7 +60,7 @@ export default function StudentHome() {
                 className="kids-book"
                 disabled={locked}
                 onClick={() => navigate(`/play/${story.id}`)}
-                aria-label={locked ? `${story.title} (locked)` : `Play ${story.title}`}
+                aria-label={story.is_private ? `${story.title} (private)` : locked ? `${story.title} (locked)` : `Play ${story.title}`}
               >
                 <span className="kids-cover">
                   {story.cover_image_path ? (
@@ -76,7 +76,7 @@ export default function StudentHome() {
               </button>
 
               <p className="kids-bubble">
-                {locked ? 'Tapusin ang naunang kuwento para mabuksan ito!' : story.description}
+                {story.is_private ? 'Hindi pa pinahihintulutan ng guro ang kuwentong ito.' : locked ? 'Tapusin ang naunang kuwento para mabuksan ito!' : story.description}
               </p>
             </div>
           );
